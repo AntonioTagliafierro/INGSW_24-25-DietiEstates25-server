@@ -17,9 +17,7 @@ import io.ktor.server.routing.*
 import org.slf4j.event.*
 
 fun Application.configureSerialization() {
-    routing {
-        get("/json/kotlinx-serialization") {
-                call.respond(mapOf("hello" to "world"))
-            }
+    install(ContentNegotiation) {
+        json()
     }
 }
