@@ -25,10 +25,11 @@ repositories {
 }
 
 dependencies {
-
+    implementation("io.ktor:ktor-server-auth:2.x.x")
+    implementation("io.ktor:ktor-server-auth-jwt:2.x.x")
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:5.2.1")
     implementation("org.mongodb:bson-kotlinx:5.2.1")
-
+    implementation("io.ktor:ktor-server-auth-jwt:2.x.x")
     implementation("io.ktor:ktor-server-call-logging-jvm")
     implementation("io.ktor:ktor-server-core-jvm")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm")

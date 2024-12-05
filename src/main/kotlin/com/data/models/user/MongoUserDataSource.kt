@@ -12,18 +12,26 @@ import org.bson.Document
 class MongoUserDataSource(
     db: MongoDatabase
 ): UserDataSource {
-
+    
     private val users = db.getCollection<User>("user")
-    //find(eq(User::email.toString(), email))
+
     override suspend fun getUserByEmail(email: String): User? {
-        return users.find(Filters.eq("email", email)).firstOrNull()
+        println("Cerco utente con email: $email")
+
+        val findUser = users.find(Filters.eq("email", email)).firstOrNull()
+
+        println("Utente trovato risultato: ${findUser?.email}")
+
+        return findUser
     }
 
     override suspend fun insertUser(user: User): Boolean {
         println("Inserendo utente: $user")
 
         val result = users.insertOne(user)
-        println("DAJE")
+
+        println("Utente inserito: $result")
         return result.wasAcknowledged()
     }
+
 }

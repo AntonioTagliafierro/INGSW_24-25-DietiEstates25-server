@@ -2,20 +2,16 @@ package com
 
 import com.data.models.user.MongoUserDataSource
 import io.ktor.server.application.*
-import com.mongodb.*
 
-import com.security.hashing.HashingService
 import com.security.hashing.SHA256HashingService
 import com.security.token.JwtTokenService
 import com.security.token.TokenConfig
-import io.ktor.server.config.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import com.data.models.user.*
 import com.mongodb.kotlin.client.coroutine.MongoClient
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
-import com.mongodb.reactivestreams.client.MongoClients
-
+import com.plugins.configureMonitoring
+import com.plugins.configureSecurity
+import com.plugins.configureSerialization
+import com.plugins.*
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -26,23 +22,6 @@ fun Application.module() {
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
 
-    GlobalScope.launch {
-        try {
-            val user = User(
-                email = "test@gmail.com",
-                password = "test123",
-                salt = "salt"
-            )
-            userDataSource.insertUser(user)
-
-            println("Utente inserito con successo!")
-
-        } catch (e: Exception) {
-            println("Errore durante l'inserimento dell'utente: ${e.message}")
-        }
-    }
-
-/*
     val tokenService = JwtTokenService()
     val tokenConfig = TokenConfig(
         issuer = environment.config.property("jwt.issuer").getString(),
@@ -52,16 +31,18 @@ fun Application.module() {
     )
     val hashingService = SHA256HashingService()
 
+    configureSecurity(tokenConfig)
     configureRouting(userDataSource, hashingService, tokenService, tokenConfig)
+
     configureMonitoring()
     configureSerialization()
-    configureSecurity(tokenConfig)
-    */
 
 
 }
 
 fun getDatabase(): MongoDatabase {
-    val client = MongoClient.create(connectionString = "mongodb+srv://dietiestates25:uIYxoeVZmUJMVPTv@ingsw.lehlq.mongodb.net/?retryWrites=true&w=majority&appName=INGSW")
+    val mongoPw = System.getenv("MONGO_PW")
+
+    val client = MongoClient.create(connectionString = "mongodb+srv://dietiestates25:$mongoPw@ingsw.lehlq.mongodb.net/?retryWrites=true&w=majority&appName=INGSW")
     return client.getDatabase( databaseName = "myDatabase")
 }
