@@ -3,7 +3,7 @@ package com
 import com.data.models.user.MongoUserDataSource
 import io.ktor.server.application.*
 import com.mongodb.*
-import com.mongodb.client.MongoClients
+
 import com.security.hashing.HashingService
 import com.security.hashing.SHA256HashingService
 import com.security.token.JwtTokenService
@@ -12,6 +12,10 @@ import io.ktor.server.config.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import com.data.models.user.*
+import com.mongodb.kotlin.client.coroutine.MongoClient
+import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import com.mongodb.reactivestreams.client.MongoClients
+
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -19,14 +23,7 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
 
-    val database = createDatabase()
-/*
-    val mongoPw = System.getenv("MANGO_PW")
-    val dbName = environment.config.tryGetString("db.mongo.database.name") ?: "INGSW"
-    val db = MongoClients.create(
-        "mongodb+srv://dietiestates25:<$mongoPw>@ingsw.lehlq.mongodb.net/?retryWrites=true&w=majority&appName=INGSW"
-    ).getDatabase(dbName)
-*/
+    val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
 
     GlobalScope.launch {
@@ -45,7 +42,7 @@ fun Application.module() {
         }
     }
 
-
+/*
     val tokenService = JwtTokenService()
     val tokenConfig = TokenConfig(
         issuer = environment.config.property("jwt.issuer").getString(),
@@ -59,5 +56,12 @@ fun Application.module() {
     configureMonitoring()
     configureSerialization()
     configureSecurity(tokenConfig)
+    */
 
+
+}
+
+fun getDatabase(): MongoDatabase {
+    val client = MongoClient.create(connectionString = "mongodb+srv://dietiestates25:uIYxoeVZmUJMVPTv@ingsw.lehlq.mongodb.net/?retryWrites=true&w=majority&appName=INGSW")
+    return client.getDatabase( databaseName = "myDatabase")
 }
