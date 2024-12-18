@@ -41,5 +41,6 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host-jvm")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     implementation("commons-codec:commons-codec:$commons_codec_version")
+    implementation("com.sun.mail:javax.mail:1.6.2")
 
 }
