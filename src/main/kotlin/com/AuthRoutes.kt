@@ -190,8 +190,6 @@ fun Route.authenticate(){
 
 fun Route.getSecretInfo() {
     // Endpoint protetto per ottenere informazioni riservate
-
-    println("ciao")
     authenticate {
         get("secret") {
             // Recupera il JWTPrincipal dalla richiesta autenticata
@@ -204,9 +202,4 @@ fun Route.getSecretInfo() {
             call.respond(HttpStatusCode.OK, "Your userId is $userId")
         }
     }
-
-
 }
-
-
-
