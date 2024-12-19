@@ -1,8 +1,11 @@
 package com
 
 
+import com.data.models.admin.Admin
+import com.data.models.admin.AdminDataSource
 import com.data.models.user.User
 import com.data.models.user.UserDataSource
+import com.data.requests.AgencyRegistrationRequest
 import com.data.requests.AuthRequest
 import com.data.responses.AuthResponse
 import com.security.hashing.HashingService
@@ -10,6 +13,8 @@ import com.security.hashing.SaltedHash
 import com.security.token.TokenClaim
 import com.security.token.TokenConfig
 import com.security.token.TokenService
+import com.utility.EmailService
+import com.utility.GeneratePassword
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -59,7 +64,55 @@ fun Route.signUp(
     }
 }
 
+fun Route.signUpAdmin(
+    hashingService: HashingService,
+    adminDataSource: AdminDataSource
+) {
+    post("addadminagency"){
 
+        // Recupera e valida la richiesta (AuthRequest) ricevuta dal client
+        val request = kotlin.runCatching { call.receiveNullable<AgencyRegistrationRequest>() }.getOrNull() ?: kotlin.run {
+            // Risponde con HTTP 400 (Bad Request) se il payload non è valido o assente
+            call.respond(HttpStatusCode.BadRequest)
+            return@post
+        }
+
+        // Verifica che i campi non siano vuoti
+        val areFieldsBlank = request.email.isBlank() || request.agencyName.isBlank()
+
+        if(areFieldsBlank){
+            // Risponde con HTTP 409 (Conflict) se i controlli falliscono
+            call.respond(HttpStatusCode.Conflict)
+            return@post
+        }
+
+        val generatedPassword = GeneratePassword().generateRandomPassword()
+
+        val saltedHash = hashingService.generateSaltedHash(generatedPassword)
+
+        val admin = Admin(
+            email = request.email,
+            password = saltedHash.hash,
+            salt = saltedHash.salt,
+            agencyName = request.agencyName,
+            type = "Admin"
+        )
+
+        val wasAcknowledged = adminDataSource.insertAdmin(admin)
+
+        if(!wasAcknowledged){
+            // Risponde con HTTP 409 (Conflict) in caso di errore
+            call.respond(HttpStatusCode.Conflict)
+        }
+
+        // Risponde con HTTP 200 (OK) se tutto va a buon fine e manda la password via email
+        EmailService().sendPasswordEmail(request.email, generatedPassword)
+        call.respond(HttpStatusCode.OK)
+
+
+
+    }
+}
 fun Route.signIn(
     userDataSource: UserDataSource,
     hashingService: HashingService,
@@ -133,11 +186,7 @@ fun Route.authenticate(){
         }
     }
 }
-fun Route.prova(){
-    post("prova"){
-        println("ciao")
-    }
-}
+
 
 fun Route.getSecretInfo() {
     // Endpoint protetto per ottenere informazioni riservate

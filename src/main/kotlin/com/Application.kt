@@ -1,5 +1,6 @@
 package com
 
+import com.data.models.admin.MongoAdminDataSource
 import com.data.models.user.MongoUserDataSource
 import io.ktor.server.application.*
 
@@ -21,6 +22,7 @@ fun Application.module() {
 
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
+    val adminDataSource = MongoAdminDataSource(database)
 
     val tokenService = JwtTokenService()
     val tokenConfig = TokenConfig(
@@ -32,7 +34,7 @@ fun Application.module() {
     val hashingService = SHA256HashingService()
 
     configureSecurity(tokenConfig)
-    configureRouting(userDataSource, hashingService, tokenService, tokenConfig)
+    configureRouting(userDataSource, adminDataSource, hashingService, tokenService, tokenConfig)
 
     configureMonitoring()
     configureSerialization()
