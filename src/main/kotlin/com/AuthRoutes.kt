@@ -133,7 +133,11 @@ fun Route.authenticate(){
         }
     }
 }
-
+fun Route.prova(){
+    post("prova"){
+        println("ciao")
+    }
+}
 
 fun Route.getSecretInfo() {
     // Endpoint protetto per ottenere informazioni riservate
