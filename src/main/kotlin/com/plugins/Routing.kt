@@ -21,7 +21,7 @@ fun Application.configureRouting(
     routing {
         signIn(userDataSource, hashingService, tokenService, tokenConfig)
         signUp(hashingService, userDataSource)
-        //signUpAdmin(hashingService, adminDataSource)
+        signUpAdmin(hashingService, adminDataSource)
         authenticate()
         getSecretInfo()
         githubAuthRoutes(gitHubOAuthService,userDataSource)
