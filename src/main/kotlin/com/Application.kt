@@ -13,6 +13,13 @@ import com.plugins.configureMonitoring
 import com.plugins.configureSecurity
 import com.plugins.configureSerialization
 import com.plugins.*
+import com.security.token.GitHubOAuthService
+import io.ktor.client.*
+import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.contentnegotiation.*
+import kotlinx.serialization.json.Json
+import io.ktor.serialization.kotlinx.json.*
+
 
 fun main(args: Array<String>) {
     io.ktor.server.netty.EngineMain.main(args)
@@ -24,6 +31,21 @@ fun Application.module() {
     val userDataSource = MongoUserDataSource(database)
     val adminDataSource = MongoAdminDataSource(database)
 
+    val gitHubOAuthService = GitHubOAuthService(
+        clientId = System.getenv("GITHUB_CLIENT_ID"),
+        clientSecret = System.getenv("GITHUB_CLIENT_SECRET"),
+        redirectUri = "http://localhost:8080/callback/github",
+        httpClient = HttpClient(CIO) {
+            install(ContentNegotiation) {
+                json(Json {
+                    prettyPrint = true // Per debug più leggibile
+                    isLenient = true // Permette JSON meno rigorosi
+                    ignoreUnknownKeys = true // Ignora campi non previsti nel modello
+                })
+            }
+        }
+    )
+
     val tokenService = JwtTokenService()
     val tokenConfig = TokenConfig(
         issuer = environment.config.property("jwt.issuer").getString(),
@@ -34,7 +56,14 @@ fun Application.module() {
     val hashingService = SHA256HashingService()
 
     configureSecurity(tokenConfig)
-    configureRouting(userDataSource, adminDataSource, hashingService, tokenService, tokenConfig)
+    configureRouting(
+        userDataSource,
+        adminDataSource,
+        hashingService,
+        tokenService,
+        tokenConfig,
+        gitHubOAuthService
+    )
 
     configureMonitoring()
     configureSerialization()

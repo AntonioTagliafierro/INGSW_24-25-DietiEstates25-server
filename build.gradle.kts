@@ -25,6 +25,14 @@ repositories {
 }
 
 dependencies {
+    implementation("io.ktor:ktor-client-core:2.3.3")
+    implementation("io.ktor:ktor-client-cio:2.3.3") // Oppure `ktor-client-okhttp` o altri engine
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.3")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+
     implementation("io.ktor:ktor-server-auth:2.x.x")
     implementation("io.ktor:ktor-server-auth-jwt:2.x.x")
     implementation("org.mongodb:mongodb-driver-kotlin-coroutine:5.2.1")

@@ -34,4 +34,17 @@ class MongoUserDataSource(
         return result.wasAcknowledged()
     }
 
+    override suspend fun insertThirdPartyUser(user: User): Boolean {
+
+        user.copy(isThirdParty = true)
+
+        println("Inserendo utente: $user")
+
+        val result = users.insertOne(user)
+
+        println("Utente inserito: $result")
+        return result.wasAcknowledged()
+    }
+
+
 }
