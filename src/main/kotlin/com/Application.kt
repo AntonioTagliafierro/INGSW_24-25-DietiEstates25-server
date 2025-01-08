@@ -34,7 +34,7 @@ fun Application.module() {
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID"),
         clientSecret = System.getenv("GITHUB_CLIENT_SECRET"),
-        redirectUri = "http://localhost:8080/callback/github",
+        redirectUri = "http://10.0.2.2:8080/callback/github",
         httpClient = HttpClient(CIO) {
             install(ContentNegotiation) {
                 json(Json {
