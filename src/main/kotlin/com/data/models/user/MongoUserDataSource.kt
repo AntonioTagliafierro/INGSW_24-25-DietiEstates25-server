@@ -3,11 +3,10 @@ package com.data.models.user
 import com.data.models.user.*
 
 import com.mongodb.client.model.Filters
-import com.mongodb.client.model.Filters.eq
-import com.mongodb.kotlin.client.coroutine.FindFlow
+
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.firstOrNull
-import org.bson.Document
+
 
 class MongoUserDataSource(
     db: MongoDatabase
@@ -20,7 +19,7 @@ class MongoUserDataSource(
 
         val findUser = users.find(Filters.eq("email", email)).firstOrNull()
 
-        println("Utente trovato risultato: ${findUser?.email}")
+        println("Utente trovato risultato: ${findUser?.getEmail()}")
 
         return findUser
     }
@@ -34,17 +33,29 @@ class MongoUserDataSource(
         return result.wasAcknowledged()
     }
 
-    override suspend fun insertThirdPartyUser(user: User): Boolean {
+    override suspend fun checkUserByEmail(user: User): Boolean {
+        println("cercando utente: ${user.getEmail()}")
 
-        user.copy(isThirdParty = true)
+        if ( users.find(Filters.eq("email", user.getEmail())).firstOrNull() != null) return true
+        else return false
 
-        println("Inserendo utente: $user")
-
-        val result = users.insertOne(user)
-
-        println("Utente inserito: $result")
-        return result.wasAcknowledged()
     }
+
+
+
+//    val userJson = """{
+//    "type": "ThirdPartyUser",
+//    "id": "63f14edc76dfd019bf6a18b5",
+//    "username": "utente#63f14edc76dfd019bf6a18b5",
+//    "email": "example@example.com",
+//    "provider": "github",
+//    "providerId": "12345"
+//}"""
+//
+//    val user: User = Json.decodeFromString(userJson)
+//    if (user is ThirdPartyUser) {
+//        println("Provider: ${user.provider}")
+//    }
 
 
 }

@@ -1,29 +1,38 @@
 package com.data.models.user
+import com.security.serializer.*
 
-import org.bson.codecs.pojo.annotations.BsonId
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
 
-import com.auth0.jwt.interfaces.Payload
+@Serializable
+open class User(
+    @Serializable(with = ObjectIdSerializer::class)
+    val id: ObjectId = ObjectId.get(), // `id` è final per default
+    private var username: String, // `username` è modificabile
+    private val email: String,
+    val type: String
+){
 
+    constructor(email: String, username: String) : this(
+        email = email,
+        username = username,
+        type = "thirdPartyUser"
+    )
 
+    constructor(email: String) : this(
+        email = email,
+        username = "utente#${ObjectId.get()}",
+        type = "localUser"
+    )
 
-data class User (
-    val username: String? = "Default Name",
-    val email: String,
-    val password : String?,
-    val salt: String?,
-    val isThirdParty: Boolean = false,
-    @BsonId val id: ObjectId = ObjectId.get()
-)
-
-fun Payload.toUser(): User? {
-    return try {
-        User(
-            email = getClaim("email").asString(),
-            password = getClaim("password").asString(),
-            salt = getClaim("salt").asString()
-        )
-    } catch (e: Exception) {
-        null
+    fun getEmail ( ) :String{
+        return email
     }
+
+    fun getUsername():String{
+        return username
+    }
+
 }
