@@ -1,4 +1,4 @@
-package com.utility
+package com.service
 
 import java.security.SecureRandom
 

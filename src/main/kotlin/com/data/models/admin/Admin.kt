@@ -9,5 +9,5 @@ data class Admin(
     val email: String,
     val password: String,
     val salt: String,
-    val type: String = "Admin" // Valore predefinito
+    val type: String = "Adm  in" // Valore predefinito
 )

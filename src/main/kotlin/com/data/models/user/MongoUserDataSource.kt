@@ -3,6 +3,7 @@ package com.data.models.user
 import com.data.models.user.*
 
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Updates
 
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.firstOrNull
@@ -14,6 +15,16 @@ class MongoUserDataSource(
     
     private val users = db.getCollection<User>("user")
 
+    override suspend fun updateUserPassword(email: String, newHash: String?, newSalt: String?): Boolean {
+        val updateResult = users.updateOne(
+            Filters.eq("email", email),
+            Updates.combine(
+                Updates.set("password", newHash),
+                Updates.set("salt", newSalt)
+            )
+        )
+        return updateResult.wasAcknowledged()
+    }
     override suspend fun getUserByEmail(email: String): User? {
         println("Cerco utente con email: $email")
 

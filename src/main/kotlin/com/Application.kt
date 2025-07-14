@@ -3,7 +3,7 @@ package com
 import com.data.models.admin.MongoAdminDataSource
 import com.data.models.user.MongoUserDataSource
 import io.ktor.server.application.*
-
+import com.service.*
 import com.security.hashing.SHA256HashingService
 import com.security.token.JwtTokenService
 import com.security.token.TokenConfig
@@ -19,10 +19,11 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.netty.*
 
 
 fun main(args: Array<String>) {
-    io.ktor.server.netty.EngineMain.main(args)
+    EngineMain.main(args)
 }
 
 fun Application.module() {
@@ -30,7 +31,8 @@ fun Application.module() {
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
     val adminDataSource = MongoAdminDataSource(database)
-
+    val userService = UserService(userDataSource)
+    
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID"),
         clientSecret = System.getenv("GITHUB_CLIENT_SECRET"),
@@ -46,6 +48,7 @@ fun Application.module() {
         }
     )
 
+
     val tokenService = JwtTokenService()
     val tokenConfig = TokenConfig(
         issuer = environment.config.property("jwt.issuer").getString(),
@@ -55,18 +58,21 @@ fun Application.module() {
     )
     val hashingService = SHA256HashingService()
 
+    configureSerialization()
+
     configureSecurity(tokenConfig)
+
     configureRouting(
         userDataSource,
         adminDataSource,
         hashingService,
         tokenService,
         tokenConfig,
-        gitHubOAuthService
+        gitHubOAuthService,
+        userService
     )
 
     configureMonitoring()
-    configureSerialization()
 
 
 }

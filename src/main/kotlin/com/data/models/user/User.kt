@@ -1,30 +1,36 @@
 package com.data.models.user
-import com.security.serializer.*
 
 
-import kotlinx.serialization.SerialName
+import com.security.serializer.ObjectIdSerializer
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
 
 @Serializable
 open class User(
     @Serializable(with = ObjectIdSerializer::class)
-    val id: ObjectId = ObjectId.get(), // `id` è final per default
-    private var username: String, // `username` è modificabile
+    val id: ObjectId = ObjectId.get(),
+    private var username: String,
     private val email: String,
-    val type: String
-){
-
+    val type: String,
+    val password: String? = null,   // ← default null
+    val salt:   String? = null      // ← default null
+) {
+    // 1° costruttore (third‐party)
     constructor(email: String, username: String) : this(
-        email = email,
+        id       = ObjectId.get(),
         username = username,
-        type = "thirdPartyUser"
+        email    = email,
+        type     = "thirdPartyUser"
     )
 
-    constructor(email: String) : this(
-        email = email,
-        username = "utente#${ObjectId.get()}",
-        type = "localUser"
+    // 2° costruttore (locale)
+    constructor(email: String, password: String?, salt: String?) : this(
+        id       = ObjectId.get(),
+        username = "$email#${ObjectId.get()}",
+        email    = email,
+        type     = "localUser",
+        password = password,
+        salt     = salt
     )
 
     fun getEmail ( ) :String{

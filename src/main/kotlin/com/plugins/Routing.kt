@@ -7,6 +7,7 @@ import com.security.hashing.HashingService
 import com.security.token.GitHubOAuthService
 import com.security.token.TokenConfig
 import com.security.token.TokenService
+import com.service.UserService
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
@@ -16,16 +17,18 @@ fun Application.configureRouting(
     hashingService: HashingService,
     tokenService: TokenService,
     tokenConfig: TokenConfig,
-    gitHubOAuthService: GitHubOAuthService
+    gitHubOAuthService: GitHubOAuthService,
+    userService: UserService
+
 ) {
     routing {
-        signIn(userDataSource, hashingService, tokenService, tokenConfig)
-        signUp(hashingService, userDataSource)
+        userAuth( hashingService,userDataSource,tokenService, tokenConfig)
         signUpAdmin(hashingService, adminDataSource)
         authenticate()
         getSecretInfo()
-        githubAuthVerification(gitHubOAuthService , userDataSource)
+        githubAuthVerification(gitHubOAuthService , userService)
         state()
+        thirdPartyUser(userService)
     }
 }
 
