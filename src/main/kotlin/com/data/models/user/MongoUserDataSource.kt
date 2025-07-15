@@ -1,6 +1,7 @@
 package com.data.models.user
 
 import com.data.models.user.*
+import com.data.requests.AuthRequest
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
@@ -52,6 +53,27 @@ class MongoUserDataSource(
 
     }
 
+    override suspend fun verifyThirdPartyUser(request: AuthRequest): Result<User> {
+
+        val user = getUserByEmail(request.email)
+
+        return if (user == null) {
+            // Crea e registra un nuovo utente di terze parti
+            val thirdPartyUser = User(
+                email = request.email,
+                username = request.username
+            )
+
+            insertUser(thirdPartyUser)
+            println("[ThirdParty] Utente registrato: ${thirdPartyUser.getUsername()}")
+            Result.success(thirdPartyUser)
+
+        } else {
+            println("[ThirdParty] Utente autentificato: ${user.getUsername()}")
+            Result.success(user)
+        }
+
+    }
 
 
 //    val userJson = """{

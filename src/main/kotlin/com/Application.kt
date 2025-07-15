@@ -31,7 +31,6 @@ fun Application.module() {
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
     val adminDataSource = MongoAdminDataSource(database)
-    val userService = UserService(userDataSource)
     
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID"),
@@ -68,8 +67,7 @@ fun Application.module() {
         hashingService,
         tokenService,
         tokenConfig,
-        gitHubOAuthService,
-        userService
+        gitHubOAuthService
     )
 
     configureMonitoring()

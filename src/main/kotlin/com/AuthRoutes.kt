@@ -14,7 +14,6 @@ import com.security.hashing.SaltedHash
 import com.security.token.*
 import com.service.EmailService
 import com.service.GeneratePassword
-import com.service.UserService
 import io.ktor.client.*
 import io.ktor.http.*
 import io.ktor.server.auth.*
@@ -30,7 +29,34 @@ fun Route.userAuth(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ){
-    post("signup") {
+
+    post("/auth/thirdPartyUser") {
+        val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
+            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
+            return@post
+        }
+
+        val result = userDataSource.verifyThirdPartyUser(request)
+
+        result.fold(
+            onSuccess = { user ->
+                // genera token come in /signin
+                val token = tokenService.generate(
+                    config = tokenConfig,
+                    TokenClaim("userId",   user.id.toString()),
+                    TokenClaim("username", user.getUsername()),
+                    TokenClaim("type",     user.type)
+                )
+
+                call.respond(HttpStatusCode.OK, AuthResponse(token = token))
+            },
+            onFailure = { error ->
+                call.respond(HttpStatusCode.Conflict, error.message ?: "Errore non puoi loggare")
+            }
+        )
+    }
+
+    post("/auth/signup") {
         // 1. Ricezione sicura del body JSON
         val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
             call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
@@ -38,19 +64,20 @@ fun Route.userAuth(
         }
 
         // 2. Validazione base dei campi DA RIVALUTARE TODO
-        val areFieldsBlank = request.email.isBlank() || request.password?.isBlank() == true
-        val isPwTooShort = request.password?.length!! < 8
+        val areFieldsBlank = request.email.isBlank()
+
         if (areFieldsBlank) {
             call.respond(HttpStatusCode.Conflict, "Email o password vuoti.")
             return@post
         }
-        if (isPwTooShort) {
-            call.respond(HttpStatusCode.Conflict, "La password deve contenere almeno 8 caratteri.")
+
+        if ( userDataSource.getUserByEmail(request.email) != null ){
+            call.respond(HttpStatusCode.Conflict, "Utente gia registrato.")
             return@post
         }
 
         // 3. Hash della password
-        val saltedHash = hashingService.generateSaltedHash(request.password)
+        val saltedHash = hashingService.generateSaltedHash(request.password!!)
 
         val user = User(
             email = request.email,
@@ -70,7 +97,7 @@ fun Route.userAuth(
         call.respond(HttpStatusCode.OK, "Registrazione completata con successo.")
     }
 
-    post("signin") {
+    post("/auth/signin") {
         val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
             call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
             return@post
@@ -88,15 +115,9 @@ fun Route.userAuth(
             return@post
         }
 
-        // Password deve essere presente
-        if (request.password.isBlank()) {
-            call.respond(HttpStatusCode.BadRequest, "Password mancante.")
-            return@post
-        }
-
         // Verifica password usando hash + salt salvati nel DB
         val isValidPassword = hashingService.verify(
-            value = request.password,
+            value = request.password!!,
             saltedHash = SaltedHash(
                 hash = user.password,
                 salt = user.salt
@@ -119,7 +140,7 @@ fun Route.userAuth(
         call.respond(HttpStatusCode.OK, AuthResponse(token = token))
     }
 
-    post("reset-password") {
+    post("/auth/reset-password") {
         val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
             call.respond(HttpStatusCode.BadRequest, "Invalid request")
             return@post
@@ -128,7 +149,6 @@ fun Route.userAuth(
         // Verifica parametri
         if (
             request.email.isBlank() ||
-            request.password.isBlank() ||
             request.newPassword!!.isBlank() ||
             request.newPassword.length < 8
         ) {
@@ -147,7 +167,7 @@ fun Route.userAuth(
 
         // Verifica vecchia password
         val isOldPasswordValid = hashingService.verify(
-            value = request.password,
+            value = request.password!!,
             saltedHash = SaltedHash(
                 hash = user.password,
                 salt = user.salt
@@ -266,7 +286,7 @@ fun Route.state(){
 
 }fun Route.githubAuthVerification(
     gitHubOAuthService: GitHubOAuthService,
-    userService : UserService,
+    userDataSource: UserDataSource,
 ) {
 
     post("/auth/github") {
@@ -310,32 +330,8 @@ fun Route.state(){
                 ?: throw IllegalStateException("Failed to retrieve user email")
             println("[GitHubAuth] User email retrieved successfully: $email")
 
-//            var user : User? = userDataSource.getUserByEmail(email)
-//
-//            if( user == null ){
-//                // Crea un'istanza di ThirdPartyUser
-//
-//                val thirdPartyUser : User = ThirdPartyUser(
-//                    username = userInfo.login,
-//                    email = email,
-//                    provider = "github"
-//                )
-//
-//                println("[GitHubAuth] ThirdPartyUser instance created: $thirdPartyUser")
-//
-//                userDataSource.insertUser(thirdPartyUser)
-//                println("[GitHubAuth] User saved to database: ${thirdPartyUser.getUsername()}")
-//                user = thirdPartyUser
-//
-//            }else if (user.type == "localUser"){
-//
-//                call.respond(HttpStatusCode.Conflict, "Non puoi loggare con le terze parti perchè gia iscritto")
-//                return@post
-//
-//            }
-//             Rispondi con il payload dell'utente
 
-            val result = userService.verifyThirdPartyUser(
+            val result = userDataSource.verifyThirdPartyUser(
                 AuthRequest(
                     email = email,
                     provider = "github",
@@ -382,27 +378,4 @@ fun Route.state(){
     }
 }
 
-fun Route.thirdPartyUser(userService: UserService) {
-
-    post("/verify/thirdPartyUser") {
-        val request = try {
-            call.receive<AuthRequest>()
-        } catch (e: Exception) {
-            call.respond(HttpStatusCode.BadRequest, "Payload non valido o assente")
-            return@post
-        }
-
-        val result = userService.verifyThirdPartyUser(request)
-
-        result.fold(
-            onSuccess = { user ->
-                call.respond(HttpStatusCode.OK, user)
-            },
-            onFailure = { error ->
-                call.respond(HttpStatusCode.Conflict, error.message ?: "Errore non puoi loggare")
-            }
-        )
-    }
-
-}
 
