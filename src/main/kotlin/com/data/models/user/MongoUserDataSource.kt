@@ -53,27 +53,9 @@ class MongoUserDataSource(
 
     }
 
-    override suspend fun verifyThirdPartyUser(request: AuthRequest): Result<User> {
 
-        val user = getUserByEmail(request.email)
+}
 
-        return if (user == null) {
-            // Crea e registra un nuovo utente di terze parti
-            val thirdPartyUser = User(
-                email = request.email,
-                username = request.username
-            )
-
-            insertUser(thirdPartyUser)
-            println("[ThirdParty] Utente registrato: ${thirdPartyUser.getUsername()}")
-            Result.success(thirdPartyUser)
-
-        } else {
-            println("[ThirdParty] Utente autentificato: ${user.getUsername()}")
-            Result.success(user)
-        }
-
-    }
 
 
 //    val userJson = """{
@@ -91,4 +73,3 @@ class MongoUserDataSource(
 //    }
 
 
-}

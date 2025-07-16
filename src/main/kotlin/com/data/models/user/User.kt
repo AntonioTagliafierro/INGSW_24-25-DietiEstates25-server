@@ -16,11 +16,13 @@ open class User(
     val salt:   String? = null      // ← default null
 ) {
     // 1° costruttore (third‐party)
-    constructor(email: String, username: String?) : this(
+    constructor(email: String, password: String?, salt: String?, username: String?) : this(
         id       = ObjectId.get(),
         username = if (username != null ) "$username#${ObjectId.get()}" else "$email#${ObjectId.get()}",
         email    = email,
-        type     = "thirdPartyUser"
+        type     = "thirdPartyUser" ,
+        password = password,
+        salt     = salt
     )
 
     // 2° costruttore (locale)

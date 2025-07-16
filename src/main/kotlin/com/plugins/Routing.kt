@@ -24,7 +24,13 @@ fun Application.configureRouting(
         signUpAdmin(hashingService, adminDataSource)
         authenticate()
         getSecretInfo()
-        githubAuthVerification(gitHubOAuthService , userDataSource)
+        githubAuthVerification(
+            gitHubOAuthService,
+            userDataSource,
+            hashingService,
+            tokenService,
+            tokenConfig
+        )
         state()
     }
 }

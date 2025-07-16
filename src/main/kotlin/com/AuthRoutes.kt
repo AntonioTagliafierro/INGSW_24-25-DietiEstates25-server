@@ -36,24 +36,29 @@ fun Route.userAuth(
             return@post
         }
 
-        val result = userDataSource.verifyThirdPartyUser(request)
+        var user = userDataSource.getUserByEmail(request.email)
 
-        result.fold(
-            onSuccess = { user ->
-                // genera token come in /signin
-                val token = tokenService.generate(
-                    config = tokenConfig,
-                    TokenClaim("userId",   user.id.toString()),
-                    TokenClaim("username", user.getUsername()),
-                    TokenClaim("type",     user.type)
-                )
+        if (user == null) {
+            val saltedHash = hashingService.generateSaltedHash("fldrvrqrdgroir")
+            userDataSource.insertUser(
+                User(
+                    email = request.email,
+                    username = request.username,
+                    password = saltedHash.hash,
+                    salt = saltedHash.salt
+                ))
+            user = userDataSource.getUserByEmail(request.email)
+        }
 
-                call.respond(HttpStatusCode.OK, AuthResponse(token = token))
-            },
-            onFailure = { error ->
-                call.respond(HttpStatusCode.Conflict, error.message ?: "Errore non puoi loggare")
-            }
+        val token = tokenService.generate(
+            config = tokenConfig,
+            TokenClaim("userId",   user!!.id.toString()),
+            TokenClaim("username", user.getUsername()),
+            TokenClaim("email", user.getEmail()),
+            TokenClaim("type",     user.type)
         )
+
+        call.respond(HttpStatusCode.OK, AuthResponse(token = token))
     }
 
     post("/auth/signup") {
@@ -79,7 +84,7 @@ fun Route.userAuth(
         // 3. Hash della password
         val saltedHash = hashingService.generateSaltedHash(request.password!!)
 
-        val user = User(
+        var user = User(
             email = request.email,
             password = saltedHash.hash,
             salt = saltedHash.salt
@@ -89,12 +94,21 @@ fun Route.userAuth(
         // 4. Inserimento nel DB
         val wasAcknowledged = userDataSource.insertUser(user)
         if (!wasAcknowledged) {
-            call.respond(HttpStatusCode.Conflict, "Email già registrata.")
+            call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
             return@post
         }
 
-        // 5. Tutto ok
-        call.respond(HttpStatusCode.OK, "Registrazione completata con successo.")
+        user = userDataSource.getUserByEmail(request.email)!!
+
+        val token = tokenService.generate(
+            config = tokenConfig,
+            TokenClaim("userId",   user.id.toString()),
+            TokenClaim("username", user.getUsername()),
+            TokenClaim("email", user.getEmail()),
+            TokenClaim("type",     user.type)
+        )
+
+        call.respond(HttpStatusCode.OK, AuthResponse(token = token))
     }
 
     post("/auth/signin") {
@@ -134,6 +148,7 @@ fun Route.userAuth(
             config = tokenConfig,
             TokenClaim("userId",   user.id.toString()),
             TokenClaim("username", user.getUsername()),
+            TokenClaim("email", user.getEmail()),
             TokenClaim("type",     user.type)
         )
 
@@ -287,6 +302,9 @@ fun Route.state(){
 }fun Route.githubAuthVerification(
     gitHubOAuthService: GitHubOAuthService,
     userDataSource: UserDataSource,
+    hashingService: HashingService,
+    tokenService: TokenService,
+    tokenConfig: TokenConfig
 ) {
 
     post("/auth/github") {
@@ -330,24 +348,30 @@ fun Route.state(){
                 ?: throw IllegalStateException("Failed to retrieve user email")
             println("[GitHubAuth] User email retrieved successfully: $email")
 
+            var user = userDataSource.getUserByEmail(email)
 
-            val result = userDataSource.verifyThirdPartyUser(
-                AuthRequest(
+            if (user == null) {
+                val saltedHash = hashingService.generateSaltedHash("fldrvrqrdgroir")
+                userDataSource.insertUser(
+                    User(
                     email = email,
-                    provider = "github",
                     username = userInfo.login,
-                    password = "github",
-                )
+                    password = saltedHash.hash,
+                    salt = saltedHash.salt
+                ))
+                user = userDataSource.getUserByEmail(email)
+            }
+
+            val token = tokenService.generate(
+                config = tokenConfig,
+                TokenClaim("userId",   user!!.id.toString()),
+                TokenClaim("username", user.getUsername()),
+                TokenClaim("email", user.getEmail()),
+                TokenClaim("type",     user.type)
             )
 
-            result.fold(
-                onSuccess = { user ->
-                    call.respond(HttpStatusCode.OK, user)
-                },
-                onFailure = { error ->
-                    call.respond(HttpStatusCode.Conflict, error.message ?: "Errore non puoi loggare")
-                }
-            )
+            call.respond(HttpStatusCode.OK, AuthResponse(token = token))
+
 
         } catch (e: Exception) {
             println("[GitHubAuth] Error during GitHub authentication: ${e.localizedMessage}")
