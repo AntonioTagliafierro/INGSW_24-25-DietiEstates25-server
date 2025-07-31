@@ -32,20 +32,22 @@ fun Application.module() {
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
     val agencyDataSource = MongoAgencyDataSource(database)
-    
+
+    val sharedHttpClient = HttpClient(CIO) {
+        install(ContentNegotiation) {
+            json(Json {
+                prettyPrint = true
+                isLenient = true
+                ignoreUnknownKeys = true
+            })
+        }
+    }
+
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID"),
         clientSecret = System.getenv("GITHUB_CLIENT_SECRET"),
         redirectUri = "http://10.0.2.2:8080//callback/github",
-        httpClient = HttpClient(CIO) {
-            install(ContentNegotiation) {
-                json(Json {
-                    prettyPrint = true // Per debug più leggibile
-                    isLenient = true // Permette JSON meno rigorosi
-                    ignoreUnknownKeys = true // Ignora campi non previsti nel modello
-                })
-            }
-        }
+        httpClient = sharedHttpClient
     )
 
 
@@ -68,7 +70,9 @@ fun Application.module() {
         hashingService,
         tokenService,
         tokenConfig,
-        gitHubOAuthService
+        gitHubOAuthService,
+        sharedHttpClient
+
     )
 
     configureMonitoring()
