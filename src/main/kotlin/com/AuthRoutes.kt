@@ -3,8 +3,10 @@ package com
 import com.security.state.*
 import com.data.models.admin.Admin
 import com.data.models.admin.AdminDataSource
+import com.data.models.agency.Agency
+import com.data.models.agency.AgencyDataSource
+import com.data.models.agency.AgencyUser
 import com.data.models.user.UserDataSource
-import com.data.requests.AgencyRegistrationRequest
 import com.data.requests.AuthRequest
 import com.data.responses.AuthResponse
 import com.data.models.user.*
@@ -62,13 +64,12 @@ fun Route.userAuth(
     }
 
     post("/auth/signup") {
-        // 1. Ricezione sicura del body JSON
+
         val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
             call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
             return@post
         }
 
-        // 2. Validazione base dei campi DA RIVALUTARE TODO
         val areFieldsBlank = request.email.isBlank()
 
         if (areFieldsBlank) {
@@ -81,7 +82,7 @@ fun Route.userAuth(
             return@post
         }
 
-        // 3. Hash della password
+
         val saltedHash = hashingService.generateSaltedHash(request.password!!)
 
         var user = User(
@@ -91,7 +92,7 @@ fun Route.userAuth(
         )
 
 
-        // 4. Inserimento nel DB
+
         val wasAcknowledged = userDataSource.insertUser(user)
         if (!wasAcknowledged) {
             call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
@@ -120,14 +121,10 @@ fun Route.userAuth(
         val user = userDataSource.getUserByEmail(request.email)
 
         if (user == null) {
-            call.respond(HttpStatusCode.Conflict, "Email non registrata.")
+            call.respond(HttpStatusCode.Conflict, "Accesso fallito Email inesistente")
             return@post
         }
 
-        if (user.type == "thirdPartyUser") {
-            call.respond(HttpStatusCode.Conflict, "Utente registrato con provider esterno.")
-            return@post
-        }
 
         // Verifica password usando hash + salt salvati nel DB
         val isValidPassword = hashingService.verify(
@@ -139,7 +136,7 @@ fun Route.userAuth(
         )
 
         if (!isValidPassword) {
-            call.respond(HttpStatusCode.Conflict, "Password errata.")
+            call.respond(HttpStatusCode.Conflict, "Accesso fallito Password errata.")
             return@post
         }
 
@@ -211,58 +208,71 @@ fun Route.userAuth(
         call.respond(HttpStatusCode.OK, "Password updated successfully")
     }
 
-
 }
 
-fun Route.signUpAdmin(
+fun Route.agencyRequests(
     hashingService: HashingService,
-    adminDataSource: AdminDataSource
-) {
-    post("addadminagency"){
-
-        // Recupera e valida la richiesta (AuthRequest) ricevuta dal client
-        val request = kotlin.runCatching { call.receiveNullable<AgencyRegistrationRequest>() }.getOrNull() ?: kotlin.run {
-            // Risponde con HTTP 400 (Bad Request) se il payload non è valido o assente
-            call.respond(HttpStatusCode.BadRequest)
+    userDataSource: UserDataSource,
+    agencyDataSource: AgencyDataSource,
+){
+    post("/agency-admin-request"){
+        val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
+            call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
             return@post
         }
 
-        // Verifica che i campi non siano vuoti
-        val areFieldsBlank = request.email.isBlank() || request.agencyName.isBlank()
+        var user = userDataSource.getUserByEmail(request.email)
 
-        if(areFieldsBlank){
-            // Risponde con HTTP 409 (Conflict) se i controlli falliscono
-            call.respond(HttpStatusCode.Conflict)
-            return@post
+        if (user == null) {
+            val saltedHash = hashingService.generateSaltedHash(request.password!!)
+
+            val wasAcknowledged = userDataSource.insertUser(
+                User(
+                    email = request.email,
+                    password = saltedHash.hash,
+                    salt = saltedHash.salt
+                )
+            )
+
+            if (!wasAcknowledged) {
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                return@post
+            }
+
+            user = userDataSource.getUserByEmail(request.email)
         }
 
-        val generatedPassword = GeneratePassword().generateRandomPassword()
-
-        val saltedHash = hashingService.generateSaltedHash(generatedPassword)
-
-        val admin = Admin(
-            email = request.email,
-            password = saltedHash.hash ?: "",
-            salt = saltedHash.salt ?: "",
-            agencyName = request.agencyName,
-            type = "Admin"
+        var wasAcknowledged = agencyDataSource.insertAgency(
+            Agency(
+                name = request.agencyName!!
+            )
         )
 
-        val wasAcknowledged = adminDataSource.insertAdmin(admin)
+        if (!wasAcknowledged) {
+            call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+            return@post
+        }
+        val agency = agencyDataSource.getAgency(request.agencyName)
 
-        if(!wasAcknowledged){
-            // Risponde con HTTP 409 (Conflict) in caso di errore
-            call.respond(HttpStatusCode.Conflict)
+        wasAcknowledged = agencyDataSource.insertAgencyUser(
+            AgencyUser(
+                agencyId = agency!!.id.toString(),
+                userId = user!!.id.toString(),
+                role = "agency_admin"
+            )
+        )
+
+        if (!wasAcknowledged) {
+            call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+            return@post
         }
 
-        // Risponde con HTTP 200 (OK) se tutto va a buon fine e manda la password via email
-        EmailService().sendPasswordEmail(request.email, generatedPassword)
-        call.respond(HttpStatusCode.OK)
-
-
+        call.respond(HttpStatusCode.OK, "Operazione completata con successo")
 
     }
 }
+
+
 
 fun Route.authenticate(){
     // Autentica una richiesta generica

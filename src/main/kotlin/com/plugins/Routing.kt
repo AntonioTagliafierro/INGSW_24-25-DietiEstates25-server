@@ -2,6 +2,7 @@ package com.plugins
 
 import com.*
 import com.data.models.admin.AdminDataSource
+import com.data.models.agency.AgencyDataSource
 import com.data.models.user.UserDataSource
 import com.security.hashing.HashingService
 import com.security.token.GitHubOAuthService
@@ -12,16 +13,20 @@ import io.ktor.server.routing.*
 
 fun Application.configureRouting(
     userDataSource: UserDataSource,
-    adminDataSource: AdminDataSource,
+    agencyDataSource: AgencyDataSource,
     hashingService: HashingService,
     tokenService: TokenService,
     tokenConfig: TokenConfig,
     gitHubOAuthService: GitHubOAuthService,
 
-) {
+    ) {
     routing {
         userAuth( hashingService,userDataSource,tokenService, tokenConfig)
-        signUpAdmin(hashingService, adminDataSource)
+        agencyRequests(
+            hashingService,
+            userDataSource,
+            agencyDataSource,
+        )
         authenticate()
         getSecretInfo()
         githubAuthVerification(

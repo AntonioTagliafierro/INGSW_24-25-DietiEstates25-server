@@ -1,6 +1,7 @@
 package com
 
 import com.data.models.admin.MongoAdminDataSource
+import com.data.models.agency.MongoAgencyDataSource
 import com.data.models.user.MongoUserDataSource
 import io.ktor.server.application.*
 import com.service.*
@@ -30,7 +31,7 @@ fun Application.module() {
 
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
-    val adminDataSource = MongoAdminDataSource(database)
+    val agencyDataSource = MongoAgencyDataSource(database)
     
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID"),
@@ -63,7 +64,7 @@ fun Application.module() {
 
     configureRouting(
         userDataSource,
-        adminDataSource,
+        agencyDataSource,
         hashingService,
         tokenService,
         tokenConfig,

@@ -26,6 +26,7 @@ class MongoUserDataSource(
         )
         return updateResult.wasAcknowledged()
     }
+
     override suspend fun getUserByEmail(email: String): User? {
         println("Cerco utente con email: $email")
 
