@@ -11,10 +11,14 @@ open class User(
     val id: ObjectId = ObjectId.get(),
     private var username: String,
     private val email: String,
+    val name: String? = null,
+    val surname: String? = null,
     val type: String,
     val password: String? = null,
     val salt:   String? = null
 ) {
+
+
     // 1° costruttore (third‐party)
     constructor(email: String, password: String?, salt: String?, username: String?) : this(
         id       = ObjectId.get(),

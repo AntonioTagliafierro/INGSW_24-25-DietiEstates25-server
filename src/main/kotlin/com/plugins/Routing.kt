@@ -1,7 +1,9 @@
 package com.plugins
 
 import com.*
-import com.data.models.admin.AdminDataSource
+import com.data.models.agency.AgencyDataSource
+import com.data.models.agency.MongoAgencyDataSource
+import com.data.models.image.ImageDataSource
 import com.data.models.property.MongoPropertyDataSource
 import com.data.models.user.UserDataSource
 import com.security.hashing.HashingService
@@ -15,29 +17,37 @@ import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
 fun Application.configureRouting(
+    agencyDataSource: AgencyDataSource,
     userDataSource: UserDataSource,
-    adminDataSource: AdminDataSource,
     hashingService: HashingService,
     tokenService: TokenService,
     tokenConfig: TokenConfig,
     gitHubOAuthService: GitHubOAuthService,
-    httpClient: HttpClient
+    httpClient: HttpClient,
+    imageDataSource: ImageDataSource
 ) {
 
     val propertyDataSource = MongoPropertyDataSource(getDatabase())
 
     val geoapifyService = GeoapifyService(
-        apiKey = System.getenv("GEOAPIFY_KEY"),
+        apiKey = System.getenv("GEOAPIFY_KEY")?: "dummy_key",
         httpClient = HttpClient(CIO)
     )
     routing {
-        userAuth( hashingService,userDataSource,tokenService, tokenConfig)
+        userAuth(
+            hashingService,
+            userDataSource,
+            tokenService,
+            tokenConfig
+        )
         agencyRequests(
             hashingService,
             userDataSource,
-            agencyDataSource,
+            agencyDataSource
         )
-        authenticate()
+        authenticate(
+            userDataSource
+        )
         getSecretInfo()
         githubAuthVerification(
             gitHubOAuthService,
@@ -48,6 +58,7 @@ fun Application.configureRouting(
         )
         state()
         propertyRoutes(propertyDataSource, geoapifyService)
+        imageRoutes(imageDataSource)
     }
 }
 

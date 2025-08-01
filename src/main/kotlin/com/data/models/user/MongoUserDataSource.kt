@@ -54,6 +54,16 @@ class MongoUserDataSource(
 
     }
 
+    override suspend fun getUserById(userId: String): User? {
+        println("Cerco utente con id: $userId")
+
+        val findUser = users.find(Filters.eq("id", userId)).firstOrNull()
+
+        println("Utente trovato risultato: ${findUser?.getEmail()}")
+
+        return findUser
+
+    }
 
 }
 

@@ -1,10 +1,9 @@
 package com
 
-import com.data.models.admin.MongoAdminDataSource
 import com.data.models.agency.MongoAgencyDataSource
+import com.data.models.image.MongoImageDataSource
 import com.data.models.user.MongoUserDataSource
 import io.ktor.server.application.*
-import com.service.*
 import com.security.hashing.SHA256HashingService
 import com.security.token.JwtTokenService
 import com.security.token.TokenConfig
@@ -32,6 +31,7 @@ fun Application.module() {
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
     val agencyDataSource = MongoAgencyDataSource(database)
+    val imageDataSource = MongoImageDataSource(database)
 
     val sharedHttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -65,14 +65,14 @@ fun Application.module() {
     configureSecurity(tokenConfig)
 
     configureRouting(
-        userDataSource,
         agencyDataSource,
+        userDataSource,
         hashingService,
         tokenService,
         tokenConfig,
         gitHubOAuthService,
-        sharedHttpClient
-
+        sharedHttpClient,
+        imageDataSource
     )
 
     configureMonitoring()

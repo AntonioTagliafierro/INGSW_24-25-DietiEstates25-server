@@ -1,16 +1,17 @@
 package com
 
 import com.security.state.*
-import com.data.models.admin.Admin
-import com.data.models.admin.AdminDataSource
 import com.data.models.agency.Agency
 import com.data.models.agency.AgencyDataSource
 import com.data.models.agency.AgencyUser
+import com.data.models.image.ImageDataSource
 import com.data.models.user.UserDataSource
 import com.data.requests.AuthRequest
 import com.data.responses.AuthResponse
 import com.data.models.user.*
 import com.data.requests.GitHubAuthRequest
+import com.data.requests.ImageRequest
+import com.data.responses.UserResponse
 import com.security.hashing.HashingService
 import com.security.hashing.SaltedHash
 import com.security.token.*
@@ -24,6 +25,63 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.*
+
+
+fun Route.imageRoutes(
+    imageDataSource: ImageDataSource
+) {
+
+    post("/user/profile/image") {
+        val request = runCatching { call.receive<ImageRequest>() }.getOrNull() ?: run {
+            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
+            return@post
+        }
+
+        val success = imageDataSource.updateUserProfileImage(
+            profilePicUserId = request.ownerId,
+            base64Image = request.base64Images.first()
+        )
+
+        if (success)
+            call.respond(HttpStatusCode.OK, "Immagine profilo aggiornata.")
+        else
+            call.respond(HttpStatusCode.InternalServerError, "Errore aggiornamento immagine.")
+    }
+
+    get("/user/profile/image/{userId}") {
+        val userId = call.parameters["userId"]
+
+        if (userId.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, "userId mancante")
+            return@get
+        }
+
+        val imageBase64 = imageDataSource.getUserProfileImage(userId)
+
+        if (imageBase64 == null) {
+            call.respond(HttpStatusCode.NotFound, "Immagine non trovata")
+        } else {
+            call.respondText(imageBase64, ContentType.Text.Plain)
+        }
+    }
+
+    post("/house/image") {
+        val request = runCatching { call.receive<ImageRequest>() }.getOrNull() ?: run {
+            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
+            return@post
+        }
+
+        val success = imageDataSource.updateHouseImages(
+            houseId = request.ownerId,
+            base64Images = request.base64Images
+        )
+
+        if (success)
+            call.respond(HttpStatusCode.OK, "Immagini annuncio aggiornate.")
+        else
+            call.respond(HttpStatusCode.InternalServerError, "Errore aggiornamento immagini.")
+    }
+}
 
 fun Route.userAuth(
     hashingService: HashingService,
@@ -121,35 +179,33 @@ fun Route.userAuth(
         val user = userDataSource.getUserByEmail(request.email)
 
         if (user == null) {
-            call.respond(HttpStatusCode.Conflict, "Accesso fallito Email inesistente")
+            call.respond(HttpStatusCode.Conflict, "Accesso fallito: email inesistente.")
             return@post
         }
 
-
-        // Verifica password usando hash + salt salvati nel DB
         val isValidPassword = hashingService.verify(
-            value = request.password!!,
-            saltedHash = SaltedHash(
-                hash = user.password,
-                salt = user.salt
-            )
+            value = request.password ?: "",
+            saltedHash = SaltedHash(hash = user.password, salt = user.salt)
         )
 
         if (!isValidPassword) {
-            call.respond(HttpStatusCode.Conflict, "Accesso fallito Password errata.")
+            call.respond(HttpStatusCode.Conflict, "Accesso fallito: password errata.")
             return@post
         }
 
-        // Genera token JWT
+        //Genera il token JWT
         val token = tokenService.generate(
             config = tokenConfig,
-            TokenClaim("userId",   user.id.toString()),
+            TokenClaim("userId", user.id.toString()),
             TokenClaim("username", user.getUsername()),
             TokenClaim("email", user.getEmail()),
-            TokenClaim("type",     user.type)
+            TokenClaim("type", user.type)
         )
 
-        call.respond(HttpStatusCode.OK, AuthResponse(token = token))
+        // Invia token response headers
+        call.response.headers.append("Authorization", "Bearer $token")
+
+        call.respond(HttpStatusCode.OK, mapOf("success" to true))
     }
 
     post("/auth/reset-password") {
@@ -272,16 +328,44 @@ fun Route.agencyRequests(
     }
 }
 
-
-
-fun Route.authenticate(){
+fun Route.authenticate(
+    userDataSource: UserDataSource
+){
     // Autentica una richiesta generica
     authenticate {
         get("authenticate") {
             // Risponde con HTTP 200 (OK) se l'utente è autenticato
             call.respond(HttpStatusCode.OK)
         }
+
+        get("/auth/me") {
+            val principal = call.principal<JWTPrincipal>()
+            val userId = principal?.getClaim("userId", String::class)
+
+            if (userId == null) {
+                call.respond(HttpStatusCode.Unauthorized, "Token non valido")
+                return@get
+            }
+
+            val user = userDataSource.getUserById(userId)
+            if (user == null) {
+                call.respond(HttpStatusCode.NotFound, "Utente non trovato")
+                return@get
+            }
+
+            call.respond(
+                UserResponse(
+                    id = user.id.toString(),
+                    username = user.getUsername(),
+                    name = user.name,
+                    surname = user.surname,
+                    email = user.getEmail(),
+                    type = user.type
+                )
+            )
+        }
     }
+
 }
 
 

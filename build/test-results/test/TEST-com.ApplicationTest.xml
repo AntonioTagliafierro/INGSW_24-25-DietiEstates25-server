@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.ApplicationTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2025-07-11T14:04:03" hostname="ADOLFO" time="1.105">
+  <properties/>
+  <testcase name="testRoot" classname="com.ApplicationTest" time="1.105">
+    <failure message="java.lang.NullPointerException: getenv(...) must not be null" type="java.lang.NullPointerException">java.lang.NullPointerException: getenv(...) must not be null
+	at com.ApplicationKt.module(Application.kt:37)
+	at com.ApplicationTest$testRoot$1.invokeSuspend$lambda$0(ApplicationTest.kt:14)
+	at io.ktor.server.engine.EmbeddedServer.instantiateAndConfigureApplication$lambda$25(EmbeddedServerJvm.kt:343)
+	at io.ktor.server.engine.EmbeddedServer.avoidingDoubleStartup(EmbeddedServerJvm.kt:360)
+	at io.ktor.server.engine.EmbeddedServer.instantiateAndConfigureApplication(EmbeddedServerJvm.kt:332)
+	at io.ktor.server.engine.EmbeddedServer.createApplication(EmbeddedServerJvm.kt:142)
+	at io.ktor.server.engine.EmbeddedServer.start(EmbeddedServerJvm.kt:271)
+	at io.ktor.server.engine.EmbeddedServer.start$default(EmbeddedServerJvm.kt:266)
+	at io.ktor.server.testing.TestApplication.start(TestApplication.kt:76)
+	at io.ktor.server.testing.client.DelegatingTestClientEngine.execute(DelegatingTestClientEngine.kt:48)
+	at io.ktor.client.engine.HttpClientEngine$executeWithinCallContext$2.invokeSuspend(HttpClientEngine.kt:99)
+	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
+	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:101)
+	at kotlinx.coroutines.internal.LimitedDispatcher$Worker.run(LimitedDispatcher.kt:113)
+	at kotlinx.coroutines.scheduling.TaskImpl.run(Tasks.kt:89)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler.runSafely(CoroutineScheduler.kt:589)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.executeTask(CoroutineScheduler.kt:823)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.runWorker(CoroutineScheduler.kt:720)
+	at kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:707)
+</failure>
+  </testcase>
+  <system-out><![CDATA[2025-07-11 16:04:04.644 [DefaultDispatcher-worker-1] TRACE i.ktor.client.plugins.HttpPlainText - Adding Accept-Charset=UTF-8 to http:///
+2025-07-11 16:04:04.708 [DefaultDispatcher-worker-2 @call-context#3] INFO  io.ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+2025-07-11 16:04:05.008 [cluster-ClusterId{value='687119d41dae2825938648f8', description='INGSW'}-srv-ingsw.lehlq.mongodb.net] DEBUG org.mongodb.driver.cluster - Updating cluster description to  {type=UNKNOWN, srvResolutionException=com.mongodb.MongoConfigurationException: Failed looking up SRV record for '_mongodb._tcp.ingsw.lehlq.mongodb.net'., servers=[]
+2025-07-11 16:04:05.008 [DefaultDispatcher-worker-2 @call-context#3] INFO  org.mongodb.driver.client - MongoClient with metadata {"application": {"name": "INGSW"}, "driver": {"name": "mongo-java-driver|reactive-streams|kotlin", "version": "5.2.1"}, "os": {"type": "Windows", "name": "Windows 11", "architecture": "amd64", "version": "10.0"}, "platform": "Java/Oracle Corporation/23.0.1+11-39|kotlin/2.1.0"} created with settings MongoClientSettings{readPreference=primary, writeConcern=WriteConcern{w=majority, wTimeout=null ms, journal=null}, retryWrites=true, retryReads=true, readConcern=ReadConcern{level=null}, credential=MongoCredential{mechanism=null, userName='dietiestates25', source='admin', password=<hidden>, mechanismProperties=<hidden>}, transportSettings=null, commandListeners=[], codecRegistry=ProvidersCodecRegistry{codecProviders=[ValueCodecProvider{}, BsonValueCodecProvider{}, DBRefCodecProvider{}, DBObjectCodecProvider{}, DocumentCodecProvider{}, CollectionCodecProvider{}, IterableCodecProvider{}, MapCodecProvider{}, GeoJsonCodecProvider{}, GridFSFileCodecProvider{}, Jsr310CodecProvider{}, JsonObjectCodecProvider{}, BsonCodecProvider{}, EnumCodecProvider{}, com.mongodb.client.model.mql.ExpressionCodecProvider@7fc58fae, com.mongodb.Jep395RecordCodecProvider@6b55647, com.mongodb.KotlinCodecProvider@53d60116]}, loggerSettings=LoggerSettings{maxDocumentLength=1000}, clusterSettings={hosts=[127.0.0.1:27017], srvHost=ingsw.lehlq.mongodb.net, srvServiceName=mongodb, mode=MULTIPLE, requiredClusterType=UNKNOWN, requiredReplicaSetName='null', serverSelector='null', clusterListeners='[]', serverSelectionTimeout='30000 ms', localThreshold='15 ms'}, socketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=0, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, heartbeatSocketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=10000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, connectionPoolSettings=ConnectionPoolSettings{maxSize=100, minSize=0, maxWaitTimeMS=120000, maxConnectionLifeTimeMS=0, maxConnectionIdleTimeMS=0, maintenanceInitialDelayMS=0, maintenanceFrequencyMS=60000, connectionPoolListeners=[], maxConnecting=2}, serverSettings=ServerSettings{heartbeatFrequencyMS=10000, minHeartbeatFrequencyMS=500, serverMonitoringMode=AUTO, serverListeners='[]', serverMonitorListeners='[]'}, sslSettings=SslSettings{enabled=true, invalidHostNameAllowed=false, context=null}, applicationName='INGSW', compressorList=[], uuidRepresentation=UNSPECIFIED, serverApi=null, autoEncryptionSettings=null, dnsClient=null, inetAddressResolver=null, contextProvider=null, timeoutMS=null}
+2025-07-11 16:04:05.010 [cluster-ClusterId{value='687119d41dae2825938648f8', description='INGSW'}-srv-ingsw.lehlq.mongodb.net] INFO  org.mongodb.driver.cluster - Exception while resolving SRV records
+com.mongodb.MongoConfigurationException: Failed looking up SRV record for '_mongodb._tcp.ingsw.lehlq.mongodb.net'.
+	at com.mongodb.internal.dns.DefaultDnsResolver.resolveHostFromSrvRecords(DefaultDnsResolver.java:96)
+	at com.mongodb.internal.connection.DefaultDnsSrvRecordMonitor$DnsSrvRecordMonitorRunnable.run(DefaultDnsSrvRecordMonitor.java:80)
+	at java.base/java.lang.Thread.run(Thread.java:1575)
+Caused by: com.mongodb.spi.dns.DnsWithResponseCodeException: DNS name not found [response code 3]
+	at com.mongodb.internal.dns.JndiDnsClient.getResourceRecordData(JndiDnsClient.java:55)
+	at com.mongodb.internal.dns.DefaultDnsResolver.resolveHostFromSrvRecords(DefaultDnsResolver.java:78)
+	... 2 common frames omitted
+Caused by: javax.naming.NameNotFoundException: DNS name not found [response code 3]
+	at jdk.naming.dns/com.sun.jndi.dns.DnsClient.checkResponseCode(DnsClient.java:726)
+	at jdk.naming.dns/com.sun.jndi.dns.DnsClient.isMatchResponse(DnsClient.java:644)
+	at jdk.naming.dns/com.sun.jndi.dns.DnsClient.doUdpQuery(DnsClient.java:463)
+	at jdk.naming.dns/com.sun.jndi.dns.DnsClient.query(DnsClient.java:247)
+	at jdk.naming.dns/com.sun.jndi.dns.Resolver.query(Resolver.java:81)
+	at jdk.naming.dns/com.sun.jndi.dns.DnsContext.c_getAttributes(DnsContext.java:434)
+	at java.naming/com.sun.jndi.toolkit.ctx.ComponentDirContext.p_getAttributes(ComponentDirContext.java:235)
+	at java.naming/com.sun.jndi.toolkit.ctx.PartialCompositeDirContext.getAttributes(PartialCompositeDirContext.java:141)
+	at java.naming/com.sun.jndi.toolkit.ctx.PartialCompositeDirContext.getAttributes(PartialCompositeDirContext.java:129)
+	at java.naming/javax.naming.directory.InitialDirContext.getAttributes(InitialDirContext.java:171)
+	at com.mongodb.internal.dns.JndiDnsClient.getResourceRecordData(JndiDnsClient.java:44)
+	... 3 common frames omitted
+2025-07-11 16:04:05.029 [DefaultDispatcher-worker-1] TRACE i.k.client.plugins.HttpCallValidator - Processing exception java.lang.NullPointerException: getenv(...) must not be null for request http://localhost/
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
