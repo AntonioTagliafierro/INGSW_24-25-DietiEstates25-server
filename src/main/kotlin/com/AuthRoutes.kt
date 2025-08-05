@@ -7,10 +7,10 @@ import com.data.models.agency.AgencyUser
 import com.data.models.image.ImageDataSource
 import com.data.models.user.UserDataSource
 import com.data.requests.AuthRequest
-import com.data.responses.AuthResponse
 import com.data.models.user.*
 import com.data.requests.GitHubAuthRequest
 import com.data.requests.ImageRequest
+import com.data.responses.TokenResponse
 import com.data.responses.UserResponse
 import com.security.hashing.HashingService
 import com.security.hashing.SaltedHash
@@ -26,62 +26,6 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.*
 
-
-fun Route.imageRoutes(
-    imageDataSource: ImageDataSource
-) {
-
-    post("/user/profile/image") {
-        val request = runCatching { call.receive<ImageRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
-            return@post
-        }
-
-        val success = imageDataSource.updateUserProfileImage(
-            profilePicUserId = request.ownerId,
-            base64Image = request.base64Images.first()
-        )
-
-        if (success)
-            call.respond(HttpStatusCode.OK, "Immagine profilo aggiornata.")
-        else
-            call.respond(HttpStatusCode.InternalServerError, "Errore aggiornamento immagine.")
-    }
-
-    get("/user/profile/image/{userId}") {
-        val userId = call.parameters["userId"]
-
-        if (userId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, "userId mancante")
-            return@get
-        }
-
-        val imageBase64 = imageDataSource.getUserProfileImage(userId)
-
-        if (imageBase64 == null) {
-            call.respond(HttpStatusCode.NotFound, "Immagine non trovata")
-        } else {
-            call.respondText(imageBase64, ContentType.Text.Plain)
-        }
-    }
-
-    post("/house/image") {
-        val request = runCatching { call.receive<ImageRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
-            return@post
-        }
-
-        val success = imageDataSource.updateHouseImages(
-            houseId = request.ownerId,
-            base64Images = request.base64Images
-        )
-
-        if (success)
-            call.respond(HttpStatusCode.OK, "Immagini annuncio aggiornate.")
-        else
-            call.respond(HttpStatusCode.InternalServerError, "Errore aggiornamento immagini.")
-    }
-}
 
 fun Route.userAuth(
     hashingService: HashingService,
@@ -110,15 +54,11 @@ fun Route.userAuth(
             user = userDataSource.getUserByEmail(request.email)
         }
 
-        val token = tokenService.generate(
-            config = tokenConfig,
-            TokenClaim("userId",   user!!.id.toString()),
-            TokenClaim("username", user.getUsername()),
-            TokenClaim("email", user.getEmail()),
-            TokenClaim("type",     user.type)
-        )
+        // Genera il token JWT
+        val token = generateTokenForUser(user!!, tokenService, tokenConfig)
 
-        call.respond(HttpStatusCode.OK, AuthResponse(token = token))
+        // Rispondi con JSON { "token": "<jwt>" }
+        call.respond(HttpStatusCode.OK, TokenResponse(token = token))
     }
 
     post("/auth/signup") {
@@ -140,7 +80,6 @@ fun Route.userAuth(
             return@post
         }
 
-
         val saltedHash = hashingService.generateSaltedHash(request.password!!)
 
         var user = User(
@@ -148,8 +87,6 @@ fun Route.userAuth(
             password = saltedHash.hash,
             salt = saltedHash.salt
         )
-
-
 
         val wasAcknowledged = userDataSource.insertUser(user)
         if (!wasAcknowledged) {
@@ -159,15 +96,9 @@ fun Route.userAuth(
 
         user = userDataSource.getUserByEmail(request.email)!!
 
-        val token = tokenService.generate(
-            config = tokenConfig,
-            TokenClaim("userId",   user.id.toString()),
-            TokenClaim("username", user.getUsername()),
-            TokenClaim("email", user.getEmail()),
-            TokenClaim("type",     user.type)
-        )
+        val token = generateTokenForUser(user, tokenService, tokenConfig)
 
-        call.respond(HttpStatusCode.OK, AuthResponse(token = token))
+        call.respond(HttpStatusCode.OK, TokenResponse(token = token))
     }
 
     post("/auth/signin") {
@@ -179,7 +110,7 @@ fun Route.userAuth(
         val user = userDataSource.getUserByEmail(request.email)
 
         if (user == null) {
-            call.respond(HttpStatusCode.Conflict, "Accesso fallito: email inesistente.")
+            call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
             return@post
         }
 
@@ -189,24 +120,17 @@ fun Route.userAuth(
         )
 
         if (!isValidPassword) {
-            call.respond(HttpStatusCode.Conflict, "Accesso fallito: password errata.")
+            call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
             return@post
         }
 
-        //Genera il token JWT
-        val token = tokenService.generate(
-            config = tokenConfig,
-            TokenClaim("userId", user.id.toString()),
-            TokenClaim("username", user.getUsername()),
-            TokenClaim("email", user.getEmail()),
-            TokenClaim("type", user.type)
-        )
+        // Genera il token JWT
+        val token = generateTokenForUser(user, tokenService, tokenConfig)
 
-        // Invia token response headers
-        call.response.headers.append("Authorization", "Bearer $token")
-
-        call.respond(HttpStatusCode.OK, mapOf("success" to true))
+        // Rispondi con JSON { "token": "<jwt>" }
+        call.respond(HttpStatusCode.OK, TokenResponse(token = token))
     }
+
 
     post("/auth/reset-password") {
         val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
@@ -464,7 +388,7 @@ fun Route.state(){
                 TokenClaim("type",     user.type)
             )
 
-            call.respond(HttpStatusCode.OK, AuthResponse(token = token))
+            call.respond(HttpStatusCode.OK, TokenResponse(token = token))
 
 
         } catch (e: Exception) {

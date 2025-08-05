@@ -58,7 +58,7 @@ fun Application.configureRouting(
         )
         state()
         propertyRoutes(propertyDataSource, geoapifyService)
-        imageRoutes(imageDataSource)
+        imageRoutes( imageDataSource )
     }
 }
 
