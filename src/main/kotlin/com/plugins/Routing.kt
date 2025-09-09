@@ -59,6 +59,7 @@ fun Application.configureRouting(
         state()
         propertyRoutes(propertyDataSource, geoapifyService)
         imageRoutes( imageDataSource )
+        profileRoutes(userDataSource, hashingService)
     }
 }
 

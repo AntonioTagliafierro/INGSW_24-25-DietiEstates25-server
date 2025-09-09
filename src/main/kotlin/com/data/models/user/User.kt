@@ -22,7 +22,7 @@ open class User(
     // 1° costruttore (third‐party)
     constructor(email: String, password: String?, salt: String?, username: String?) : this(
         id       = ObjectId.get(),
-        username = if (username != null ) "$username#${ObjectId.get()}" else "$email#${ObjectId.get()}",
+        username = username ?: email.substringBefore("@"),
         email    = email,
         type     = "thirdPartyUser" ,
         password = password,
@@ -32,7 +32,7 @@ open class User(
     // 2° costruttore (locale)
     constructor(email: String, password: String?, salt: String?) : this(
         id       = ObjectId.get(),
-        username = "$email#${ObjectId.get()}",
+        username = email.substringBefore("@"),
         email    = email,
         type     = "localUser",
         password = password,
