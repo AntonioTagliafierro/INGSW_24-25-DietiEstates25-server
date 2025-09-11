@@ -24,20 +24,22 @@ open class User(
         id       = ObjectId.get(),
         username = if (username != null ) "$username#${ObjectId.get()}" else "$email#${ObjectId.get()}",
         email    = email,
-        type     = "thirdPartyUser" ,
+        type     = "THIRDPARTYUSER" ,
         password = password,
         salt     = salt
     )
 
+    // per prova agente
     // 2° costruttore (locale)
     constructor(email: String, password: String?, salt: String?) : this(
         id       = ObjectId.get(),
         username = "$email#${ObjectId.get()}",
         email    = email,
-        type     = "localUser",
+        type     = "LOCALUSER",
         password = password,
         salt     = salt
     )
+
 
     fun getEmail ( ) :String{
         return email

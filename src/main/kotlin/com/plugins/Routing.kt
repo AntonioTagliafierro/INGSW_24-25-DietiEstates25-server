@@ -3,8 +3,10 @@ package com.plugins
 import com.*
 import com.data.models.agency.AgencyDataSource
 import com.data.models.agency.MongoAgencyDataSource
+import com.data.models.appointment.AppointmentDataSource
 import com.data.models.image.ImageDataSource
-import com.data.models.property.MongoPropertyDataSource
+import com.data.models.notification.NotificationDataSource
+import com.data.models.propertylisting.PropertyListingDataSource
 import com.data.models.user.UserDataSource
 import com.security.hashing.HashingService
 import com.security.token.GitHubOAuthService
@@ -24,10 +26,13 @@ fun Application.configureRouting(
     tokenConfig: TokenConfig,
     gitHubOAuthService: GitHubOAuthService,
     httpClient: HttpClient,
-    imageDataSource: ImageDataSource
+    imageDataSource: ImageDataSource,
+    propertyListingDataSource: PropertyListingDataSource,
+    appointmentDataSource: AppointmentDataSource,
+    notificationDataSource: NotificationDataSource
 ) {
 
-    val propertyDataSource = MongoPropertyDataSource(getDatabase())
+
 
     val geoapifyService = GeoapifyService(
         apiKey = System.getenv("GEOAPIFY_KEY")?: "dummy_key",
@@ -57,8 +62,13 @@ fun Application.configureRouting(
             tokenConfig
         )
         state()
-        propertyRoutes(propertyDataSource, geoapifyService)
+
         imageRoutes( imageDataSource )
+
+        propertyListingRoutes(propertyListingDataSource)
+
+        appointmentRoutes(appointmentDataSource, notificationDataSource)
+
     }
 }
 

@@ -25,6 +25,8 @@ repositories {
 }
 
 dependencies {
+    implementation("io.ktor:ktor-serialization-jackson:3.0.2")
+    implementation("org.litote.kmongo:kmongo-coroutine-serialization:4.10.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.7.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.15.2")
 
@@ -57,5 +59,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     implementation("commons-codec:commons-codec:$commons_codec_version")
     implementation("com.sun.mail:javax.mail:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 
 }

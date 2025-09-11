@@ -1,8 +1,16 @@
 package com
 
 import com.data.models.agency.MongoAgencyDataSource
+import com.data.models.appointment.Appointment
+import com.data.models.appointment.MongoAppointmentDataSource
 import com.data.models.image.MongoImageDataSource
+import com.data.models.notification.MongoNotificationDataSource
+import com.data.models.notification.Notification
+import com.data.models.propertylisting.MongoPropertyListingDataSource
+import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.MongoUserDataSource
+import com.mongodb.ConnectionString
+import com.mongodb.MongoClientSettings
 import io.ktor.server.application.*
 import com.security.hashing.SHA256HashingService
 import com.security.token.JwtTokenService
@@ -14,6 +22,8 @@ import com.plugins.configureSecurity
 import com.plugins.configureSerialization
 import com.plugins.*
 import com.security.token.GitHubOAuthService
+import com.service.GeoapifyService
+import com.service.mailservice.configureClient
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -28,10 +38,17 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
 
+
+    configureClient() // for MailerSender in Service
+
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
     val agencyDataSource = MongoAgencyDataSource(database)
     val imageDataSource = MongoImageDataSource(database)
+    val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
+    val appointmentCollection = database.getCollection<Appointment>("appointments")
+    val notificationCollection = database.getCollection<Notification>("notifications")
+
 
     val sharedHttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {
@@ -42,6 +59,22 @@ fun Application.module() {
             })
         }
     }
+    val geoapifyService = GeoapifyService(
+        apiKey = System.getenv("GEOAPIFY_KEY"),
+        httpClient = sharedHttpClient
+    )
+
+    // PropertyListing
+    val propertyListingDataSource = MongoPropertyListingDataSource(
+        collection = propertyListingCollection,
+        geoapifyService = geoapifyService
+    )
+
+    // Appointments
+    val appointmentDataSource = MongoAppointmentDataSource(appointmentCollection)
+    // Notifications
+    val notificationDataSource = MongoNotificationDataSource(notificationCollection)
+
 
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID"),
@@ -72,7 +105,10 @@ fun Application.module() {
         tokenConfig,
         gitHubOAuthService,
         sharedHttpClient,
-        imageDataSource
+        imageDataSource,
+        propertyListingDataSource,
+        appointmentDataSource,
+        notificationDataSource
     )
 
     configureMonitoring()
@@ -83,6 +119,12 @@ fun Application.module() {
 fun getDatabase(): MongoDatabase {
     val mongoPw = System.getenv("MONGO_PW")
 
-    val client = MongoClient.create(connectionString = "mongodb+srv://dietiestates25:$mongoPw@ingsw.lehlq.mongodb.net/?retryWrites=true&w=majority&appName=INGSW")
-    return client.getDatabase( databaseName = "myDatabase")
+    val settings = MongoClientSettings.builder()
+        .applyConnectionString(ConnectionString("mongodb://localhost:27017")).build()
+    val client = MongoClient.create(settings)
+    val database = client.getDatabase("immobiliDB")
+
+
+    return database
 }
+

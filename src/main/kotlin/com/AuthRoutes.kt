@@ -15,7 +15,6 @@ import com.data.responses.UserResponse
 import com.security.hashing.HashingService
 import com.security.hashing.SaltedHash
 import com.security.token.*
-import com.service.EmailService
 import com.service.GeneratePassword
 import io.ktor.client.*
 import io.ktor.http.*
@@ -33,6 +32,9 @@ fun Route.userAuth(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ){
+
+
+
 
     post("/auth/thirdPartyUser") {
         val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
@@ -238,7 +240,7 @@ fun Route.agencyRequests(
             AgencyUser(
                 agencyId = agency!!.id.toString(),
                 userId = user!!.id.toString(),
-                role = "agency_admin"
+                role = "AGENCY_ADMIN"
             )
         )
 
