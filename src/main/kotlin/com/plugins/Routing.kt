@@ -69,6 +69,7 @@ fun Application.configureRouting(
 
         appointmentRoutes(appointmentDataSource, notificationDataSource)
 
+        profileRoutes(userDataSource, hashingService)
     }
 }
 

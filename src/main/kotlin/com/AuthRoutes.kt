@@ -45,7 +45,7 @@ fun Route.userAuth(
         var user = userDataSource.getUserByEmail(request.email)
 
         if (user == null) {
-            val saltedHash = hashingService.generateSaltedHash("fldrvrqrdgroir")
+            val saltedHash = hashingService.generateSaltedHash("caeser+3fldrvrqrdgroir")
             userDataSource.insertUser(
                 User(
                     email = request.email,
@@ -54,10 +54,25 @@ fun Route.userAuth(
                     salt = saltedHash.salt
                 ))
             user = userDataSource.getUserByEmail(request.email)
+
+            val newHashed = hashingService.generateSaltedHash(
+                user!!.id.toString()
+            )
+
+            val updateResult = userDataSource.updateUserPassword(
+                email = user.getEmail(),
+                newHash = newHashed.hash,
+                newSalt = newHashed.salt
+            )
+
+            if (!updateResult) {
+                call.respond(HttpStatusCode.InternalServerError, "Failed to update password")
+                return@post
+            }
         }
 
         // Genera il token JWT
-        val token = generateTokenForUser(user!!, tokenService, tokenConfig)
+        val token = generateTokenForUser(user, tokenService, tokenConfig)
 
         // Rispondi con JSON { "token": "<jwt>" }
         call.respond(HttpStatusCode.OK, TokenResponse(token = token))
@@ -133,62 +148,6 @@ fun Route.userAuth(
         call.respond(HttpStatusCode.OK, TokenResponse(token = token))
     }
 
-
-    post("/auth/reset-password") {
-        val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Invalid request")
-            return@post
-        }
-
-        // Verifica parametri
-        if (
-            request.email.isBlank() ||
-            request.newPassword!!.isBlank() ||
-            request.newPassword.length < 8
-        ) {
-            call.respond(HttpStatusCode.BadRequest, "Invalid or missing fields")
-            return@post
-        }
-
-        // Trova l'utente
-        val user = userDataSource.getUserByEmail(request.email)
-
-        if (user == null) {
-            call.respond(HttpStatusCode.NotFound, "User not found")
-            return@post
-        }
-
-
-        // Verifica vecchia password
-        val isOldPasswordValid = hashingService.verify(
-            value = request.password!!,
-            saltedHash = SaltedHash(
-                hash = user.password,
-                salt = user.salt
-            )
-        )
-
-        if (!isOldPasswordValid) {
-            call.respond(HttpStatusCode.Unauthorized, "Incorrect old password")
-            return@post
-        }
-
-        // Hash della nuova password
-        val newHashed = hashingService.generateSaltedHash(request.newPassword)
-
-        val updateResult = userDataSource.updateUserPassword(
-            email = user.getEmail(),
-            newHash = newHashed.hash,
-            newSalt = newHashed.salt
-        )
-
-        if (!updateResult) {
-            call.respond(HttpStatusCode.InternalServerError, "Failed to update password")
-            return@post
-        }
-
-        call.respond(HttpStatusCode.OK, "Password updated successfully")
-    }
 
 }
 

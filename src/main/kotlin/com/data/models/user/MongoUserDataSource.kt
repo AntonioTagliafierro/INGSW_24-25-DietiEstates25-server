@@ -65,6 +65,31 @@ class MongoUserDataSource(
 
     }
 
+    override suspend fun updateUsername(email: String, username: String): Boolean {
+        val updateResult = users.updateOne(
+            Filters.eq("email", email),
+            Updates.set("username", username)
+        )
+        return updateResult.wasAcknowledged()
+    }
+
+    override suspend fun updateFullName(email: String, value: String): Boolean {
+        val parts = value.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+
+        val surname = parts.last()
+        val name = parts.dropLast(1).joinToString(" ")
+
+        val updateResult = users.updateOne(
+            Filters.eq("email", email),
+            Updates.combine(
+                Updates.set("name", name),
+                Updates.set("surname", surname)
+            )
+        )
+        return updateResult.wasAcknowledged()
+    }
+
+
 }
 
 
