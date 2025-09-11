@@ -18,7 +18,6 @@ open class User(
     val salt:   String? = null
 ) {
 
-
     // 1° costruttore (third‐party)
     constructor(email: String, password: String?, salt: String?, username: String?) : this(
         id       = ObjectId.get(),
