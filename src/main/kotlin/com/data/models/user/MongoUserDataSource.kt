@@ -73,6 +73,14 @@ class MongoUserDataSource(
         return updateResult.wasAcknowledged()
     }
 
+    override suspend fun updateUserRole(email: String , role : Role) :Boolean{
+        val updateResult = users.updateOne(
+            Filters.eq("email", email),
+            Updates.set("role", role.label)
+        )
+        return updateResult.wasAcknowledged()
+    }
+
     override suspend fun updateFullName(email: String, value: String): Boolean {
         val parts = value.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
 
@@ -89,6 +97,20 @@ class MongoUserDataSource(
         return updateResult.wasAcknowledged()
     }
 
+    override suspend fun ensureSysAdmin() {
+
+        val email = "admin@system.com"
+        val existing = getUserByEmail(email)
+
+        if (existing == null) {
+            val sysAdmin = User()
+            insertUser(sysAdmin)
+            println("Creato System Admin di default con email: $email")
+        } else {
+            println("System Admin già presente: $email")
+        }
+
+    }
 
 }
 

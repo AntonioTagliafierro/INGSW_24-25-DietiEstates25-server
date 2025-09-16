@@ -30,6 +30,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.netty.*
+import kotlinx.coroutines.runBlocking
 
 
 fun main(args: Array<String>) {
@@ -48,7 +49,9 @@ fun Application.module() {
     val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
     val appointmentCollection = database.getCollection<Appointment>("appointments")
     val notificationCollection = database.getCollection<Notification>("notifications")
-
+    runBlocking {
+        userDataSource.ensureSysAdmin()
+    }
 
     val sharedHttpClient = HttpClient(CIO) {
         install(ContentNegotiation) {

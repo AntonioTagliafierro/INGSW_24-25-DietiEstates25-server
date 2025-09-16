@@ -15,6 +15,6 @@ fun generateTokenForUser(
         TokenClaim("userId", user.id.toString()),
         TokenClaim("username", user.getUsername()),
         TokenClaim("email", user.getEmail()),
-        TokenClaim("type", user.type)
+        TokenClaim("role", user.role.label)
     )
 }

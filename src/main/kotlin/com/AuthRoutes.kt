@@ -9,14 +9,13 @@ import com.data.models.user.UserDataSource
 import com.data.requests.AuthRequest
 import com.data.models.user.*
 import com.data.requests.GitHubAuthRequest
-import com.data.requests.ImageRequest
+import com.data.requests.UserInfoRequest
+import com.data.responses.ListResponse
 import com.data.responses.TokenResponse
 import com.data.responses.UserResponse
 import com.security.hashing.HashingService
 import com.security.hashing.SaltedHash
 import com.security.token.*
-import com.service.GeneratePassword
-import io.ktor.client.*
 import io.ktor.http.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -131,14 +130,23 @@ fun Route.userAuth(
             return@post
         }
 
-        val isValidPassword = hashingService.verify(
-            value = request.password ?: "",
-            saltedHash = SaltedHash(hash = user.password, salt = user.salt)
-        )
+        if (user.salt != null){
+            val isValidPassword = hashingService.verify(
+                value = request.password ?: "",
+                saltedHash = SaltedHash(hash = user.password, salt = user.salt)
+            )
 
-        if (!isValidPassword) {
-            call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
-            return@post
+            if (!isValidPassword) {
+                call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
+                return@post
+            }
+
+        }else{
+
+            if ( user.password != request.password ){
+                call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
+                return@post
+            }
         }
 
         // Genera il token JWT
@@ -156,22 +164,54 @@ fun Route.agencyRequests(
     userDataSource: UserDataSource,
     agencyDataSource: AgencyDataSource,
 ){
-    post("/agency-admin-request"){
-        val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
-            return@post
-        }
+    route("/agency") {
 
-        var user = userDataSource.getUserByEmail(request.email)
+        post("/request") {
+            val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
+                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                return@post
+            }
 
-        if (user == null) {
-            val saltedHash = hashingService.generateSaltedHash(request.password!!)
+            var user = userDataSource.getUserByEmail(request.email)
 
-            val wasAcknowledged = userDataSource.insertUser(
-                User(
-                    email = request.email,
-                    password = saltedHash.hash,
-                    salt = saltedHash.salt
+            if (user == null) {
+                val saltedHash = hashingService.generateSaltedHash(request.password!!)
+
+                val wasAcknowledged = userDataSource.insertUser(
+                    User(
+                        email = request.email,
+                        password = saltedHash.hash,
+                        salt = saltedHash.salt,
+                        role = Role.PENDING_AGENCY_ADMIN
+                    )
+                )
+
+                if (!wasAcknowledged) {
+                    call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                    return@post
+                }
+
+                user = userDataSource.getUserByEmail(request.email)
+            }
+
+            var wasAcknowledged = agencyDataSource.insertAgency(
+                Agency(
+                    name = request.agencyName!!,
+                    agencyEmail = user!!.getEmail(),
+                    pending = true
+                )
+            )
+
+            if (!wasAcknowledged) {
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                return@post
+            }
+            val agency = agencyDataSource.getAgency(request.agencyName)
+
+            wasAcknowledged = agencyDataSource.insertAgencyUser(
+                AgencyUser(
+                    agencyId = agency!!.id.toString(),
+                    userId = user.id.toString()
                 )
             )
 
@@ -180,35 +220,71 @@ fun Route.agencyRequests(
                 return@post
             }
 
-            user = userDataSource.getUserByEmail(request.email)
+            call.respond(HttpStatusCode.OK, "Operazione completata con successo")
+
         }
 
-        var wasAcknowledged = agencyDataSource.insertAgency(
-            Agency(
-                name = request.agencyName!!
+        post("/request-decision") {
+            val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
+                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                return@post
+            }
+
+            val user = userDataSource.getUserByEmail(request.value)
+                ?: run {
+                    call.respond(HttpStatusCode.Conflict, "Errore durante il retrieve dell'agente")
+                    return@post
+                }
+
+            if (request.typeRequest == "accepted") {
+
+                val roleUpdated = userDataSource.updateUserRole(user.getEmail(), Role.AGENCY_ADMIN)
+                if (!roleUpdated) {
+                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update del ruolo")
+                    return@post
+                }
+
+                val agencyUpdated = agencyDataSource.updateAgencyState(user.id.toString())
+                if (!agencyUpdated) {
+                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update dell'agenzia")
+                    return@post
+                }
+                //NOTIFICA
+                call.respond(HttpStatusCode.OK, "Richiesta accettata con successo")
+            } else {
+
+                val roleUpdated = userDataSource.updateUserRole(user.getEmail(), Role.LOCAL_USER)
+                if (!roleUpdated) {
+                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update del ruolo")
+                    return@post
+                }
+
+                val agencyDeleted = agencyDataSource.deleteAgency(user.id.toString())
+                if (!agencyDeleted) {
+                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'eliminazione dell'agenzia")
+                    return@post
+                }
+                //NOTIFICA
+                call.respond(HttpStatusCode.OK, "Richiesta rifiutata con successo")
+            }
+        }
+
+        get("/agencies") {
+            val agencies = try {
+                agencyDataSource.getAllAgencies()
+            } catch (e: Exception) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    ListResponse<List<Agency>>(success = false, message = "Errore DB: ${e.message}")
+                )
+                return@get
+            }
+
+            call.respond(
+                HttpStatusCode.OK,
+                ListResponse(success = true, data = agencies)
             )
-        )
-
-        if (!wasAcknowledged) {
-            call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
-            return@post
         }
-        val agency = agencyDataSource.getAgency(request.agencyName)
-
-        wasAcknowledged = agencyDataSource.insertAgencyUser(
-            AgencyUser(
-                agencyId = agency!!.id.toString(),
-                userId = user!!.id.toString(),
-                role = "AGENCY_ADMIN"
-            )
-        )
-
-        if (!wasAcknowledged) {
-            call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
-            return@post
-        }
-
-        call.respond(HttpStatusCode.OK, "Operazione completata con successo")
 
     }
 }
@@ -245,7 +321,7 @@ fun Route.authenticate(
                     name = user.name,
                     surname = user.surname,
                     email = user.getEmail(),
-                    type = user.type
+                    role = user.role.label
                 )
             )
         }
@@ -283,7 +359,8 @@ fun Route.state(){
     userDataSource: UserDataSource,
     hashingService: HashingService,
     tokenService: TokenService,
-    tokenConfig: TokenConfig
+    tokenConfig: TokenConfig,
+    imageDataSource: ImageDataSource
 ) {
 
     post("/auth/github") {
@@ -322,6 +399,12 @@ fun Route.state(){
                 ?: throw IllegalStateException("Failed to retrieve user info")
             println("[GitHubAuth] User info retrieved successfully: $userInfo")
 
+            // Usa l'access token per ottenere i dati dell'utente
+            println("[GitHubAuth] Fetching user info with access token: $accessToken")
+            val profilePic = gitHubOAuthService.getProfilePicBase64(accessToken)
+                ?: throw IllegalStateException("Failed to retrieve user info")
+            println("[GitHubAuth] User info retrieved successfully: $userInfo")
+
             println("[GitHubAuth] Fetching user email with access token: $accessToken")
             val email = gitHubOAuthService.getPrimaryEmail(accessToken)
                 ?: throw IllegalStateException("Failed to retrieve user email")
@@ -338,15 +421,21 @@ fun Route.state(){
                     password = saltedHash.hash,
                     salt = saltedHash.salt
                 ))
+
                 user = userDataSource.getUserByEmail(email)
+
+                imageDataSource.updateIdProfileImage(user!!.id.toString(), profilePic)
+
             }
 
             val token = tokenService.generate(
                 config = tokenConfig,
-                TokenClaim("userId",   user!!.id.toString()),
+                TokenClaim("userId",   user.id.toString()),
                 TokenClaim("username", user.getUsername()),
+                TokenClaim("surname", user.surname ?: ""),
+                TokenClaim("name",user.name ?: ""),
                 TokenClaim("email", user.getEmail()),
-                TokenClaim("type",     user.type)
+                TokenClaim("role",     user.role.label)
             )
 
             call.respond(HttpStatusCode.OK, TokenResponse(token = token))

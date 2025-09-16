@@ -5,6 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 class AgencyUser (
     val userId: String,
-    val agencyId: String,
-    val role: String
+    val agencyId: String
 )

@@ -97,7 +97,7 @@ fun Route.profileRoutes(
 
         // Esegui update in base al campo richiesto
         val success = when (request.typeRequest.lowercase()) {
-            "full name" -> userDataSource.updateFullName(request.email, request.value)
+            "name and surname" -> userDataSource.updateFullName(request.email, request.value)
             "username" -> userDataSource.updateUsername(request.email, request.value)
             else -> {
                 call.respond(HttpStatusCode.BadRequest, "Invalid typeRequest")

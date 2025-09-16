@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UserInfoRequest(
     val email: String,
-    val value: String,        // es. nuovo username, nome, cognome
-    val typeRequest: String   // es. "username", "name", "surname"
+    val value: String,
+    val typeRequest: String
 )

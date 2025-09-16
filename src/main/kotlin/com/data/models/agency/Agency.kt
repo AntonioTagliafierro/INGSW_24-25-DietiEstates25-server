@@ -8,5 +8,7 @@ import org.bson.types.ObjectId
 open class Agency(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    private var name: String
+    var name: String,
+    var pending : Boolean,
+    val agencyEmail: String
 )

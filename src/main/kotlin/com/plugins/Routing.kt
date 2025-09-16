@@ -59,7 +59,8 @@ fun Application.configureRouting(
             userDataSource,
             hashingService,
             tokenService,
-            tokenConfig
+            tokenConfig,
+            imageDataSource
         )
         state()
 

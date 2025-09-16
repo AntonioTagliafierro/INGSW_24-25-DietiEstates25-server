@@ -9,5 +9,5 @@ data class UserResponse(
     val name: String? = null,
     val surname: String? = null,
     val email: String,
-    val type: String
+    val role: String
 )

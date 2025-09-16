@@ -12,6 +12,9 @@ import io.ktor.client.call.*
 import kotlinx.serialization.json.Json
 
 import io.ktor.http.*
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import java.util.*
 
 class GitHubOAuthService(
     val clientId: String,
@@ -53,6 +56,7 @@ class GitHubOAuthService(
         return Json { ignoreUnknownKeys = true }.decodeFromString(responseBody)
     }
 
+
     suspend fun getPrimaryEmail(accessToken: String): String? {
         val response: HttpResponse = httpClient.get("https://api.github.com/user/emails") {
             header("Authorization", "Bearer $accessToken")
@@ -74,6 +78,41 @@ class GitHubOAuthService(
 
         // Trova l'email primaria e verificata
         return emails.firstOrNull { it.primary && it.verified }?.email
+    }
+
+
+    suspend fun getProfilePicBase64(accessToken: String): String? {
+        // 1) Chiamo /user
+        val userResp: HttpResponse = httpClient.get("https://api.github.com/user") {
+            header("Authorization", "Bearer $accessToken")
+            header("Accept", "application/json")
+        }
+
+        if (!userResp.status.isSuccess()) {
+            println("GitHub /user error: ${userResp.status} - ${userResp.bodyAsText()}")
+            return null
+        }
+
+        val userJson = userResp.bodyAsText()
+        val jsonElement = Json.parseToJsonElement(userJson).jsonObject
+        val avatarUrl = jsonElement["avatar_url"]?.jsonPrimitive?.content
+            ?: return null
+
+        // 2) Scarico l’immagine
+        val avatarResp: HttpResponse = httpClient.get(avatarUrl) {
+            header("Accept", "image/*")
+        }
+
+        if (!avatarResp.status.isSuccess()) {
+            println("Avatar download error: ${avatarResp.status} - ${avatarResp.bodyAsText()}")
+            return null
+        }
+
+        val bytes: ByteArray = avatarResp.body()
+        val contentType = avatarResp.headers["Content-Type"] ?: "image/png"
+        val b64 = Base64.getEncoder().encodeToString(bytes)
+
+        return "data:$contentType;base64,$b64"
     }
 }
 
