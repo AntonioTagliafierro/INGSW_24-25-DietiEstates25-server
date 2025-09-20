@@ -9,6 +9,7 @@ import com.data.models.user.UserDataSource
 import com.data.requests.AuthRequest
 import com.data.models.user.*
 import com.data.requests.GitHubAuthRequest
+import com.data.requests.SuppAdminRequest
 import com.data.requests.UserInfoRequest
 import com.data.responses.ListResponse
 import com.data.responses.TokenResponse
@@ -16,7 +17,9 @@ import com.data.responses.UserResponse
 import com.security.hashing.HashingService
 import com.security.hashing.SaltedHash
 import com.security.token.*
+import com.service.mailservice.MailerSendService
 import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.Accepted
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
@@ -31,9 +34,6 @@ fun Route.userAuth(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ){
-
-
-
 
     post("/auth/thirdPartyUser") {
         val request = kotlin.runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
@@ -157,6 +157,118 @@ fun Route.userAuth(
     }
 
 
+}
+
+fun Route.admin(
+    hashingService: HashingService,
+    userDataSource: UserDataSource,
+    mailerSendService : MailerSendService
+){
+    route("/admin") {
+
+        route("/users") {
+
+            get {
+                val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
+                    call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                    return@get
+                }
+
+                if (request.typeRequest == "filtered") {
+
+                    val filteredUsers = try {
+                        userDataSource.getFilteredUsers(request.value)
+                    } catch (e: Exception) {
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ListResponse<List<Agency>>(success = false, message = "Errore DB: ${e.message}")
+                        )
+                        return@get
+                    }
+
+                    call.respond(
+                        HttpStatusCode.OK,
+                        ListResponse(success = true, data = filteredUsers)
+                    )
+
+                } else {
+
+                    val users = try {
+                        userDataSource.getAllUsers()
+                    } catch (e: Exception) {
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ListResponse<List<Agency>>(success = false, message = "Errore DB: ${e.message}")
+                        )
+                        return@get
+                    }
+
+                    call.respond(
+                        HttpStatusCode.OK,
+                        ListResponse(success = true, data = users)
+                    )
+                }
+
+
+            }
+
+            post{
+
+                val request = runCatching { call.receiveNullable<SuppAdminRequest>() }.getOrNull() ?: run {
+                    call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                    return@post
+                }
+
+                val admin = userDataSource.getUserByEmail(request.adminEmail)
+
+                if (admin == null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Admin non trovato.")
+                    return@post
+                }
+
+                if( admin.id.toString() != request.adminId ){
+                    call.respond(HttpStatusCode.Unauthorized, "Impossibile convalidare le credenziali.")
+                    return@post
+                }
+
+
+                val username = request.usernameSuppAdmin
+                if (userDataSource.getUserByEmail("$username@system.com") != null) {
+                    call.respond(HttpStatusCode.Unauthorized, "Suppadmin gia esistente.")
+                    return@post
+                }
+
+                val password = admin.generateRandomPassword()
+                val saltedHash = hashingService.generateSaltedHash(password)
+
+                val suppAdmin = User(
+                    email = "$username@system.com",
+                    role = Role.SUPPORT_ADMIN,
+                    password = saltedHash.hash!!,
+                    salt = saltedHash.salt!!
+                )
+
+                val wasAcknowledged = userDataSource.insertUser(suppAdmin)
+                if (!wasAcknowledged) {
+                    call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                    return@post
+                }
+
+                val result = mailerSendService.sendSuppAdminEmail(request.suppAdminEmail, username, password)
+
+                if (result.status == Accepted){
+                    call.respond(HttpStatusCode.OK, "Credenziali inviate all'email ${request.suppAdminEmail} con successo")
+                }else{
+
+                    call.respond(HttpStatusCode.Conflict, "Errore durante l'invio email")
+                    return@post
+                }
+
+            }
+
+        }
+
+    }
 }
 
 fun Route.agencyRequests(
@@ -288,6 +400,8 @@ fun Route.agencyRequests(
 
     }
 }
+
+
 
 fun Route.authenticate(
     userDataSource: UserDataSource
@@ -424,7 +538,7 @@ fun Route.state(){
 
                 user = userDataSource.getUserByEmail(email)
 
-                imageDataSource.updateIdProfileImage(user!!.id.toString(), profilePic)
+                imageDataSource.updatePpById(user!!.id.toString(), profilePic)
 
             }
 

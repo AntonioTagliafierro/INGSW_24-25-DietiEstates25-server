@@ -6,6 +6,7 @@ import com.mongodb.client.model.Filters
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
+import org.intellij.lang.annotations.Identifier
 
 
 class MongoImageDataSource(
@@ -14,12 +15,11 @@ class MongoImageDataSource(
 
     private val images = db.getCollection<StoredImage>("images")
 
-    override suspend fun updateIdProfileImage(profilePicUserId: String, base64Image: String): Boolean {
-        images.deleteMany(Filters.eq("ownerId", profilePicUserId)) // Rimuove l'immagine esistente
-        val result = images.insertOne(StoredImage(ownerId = profilePicUserId, base64 = base64Image))
+    override suspend fun updatePpById(ownerIdentifier: String, base64Image: String): Boolean {
+        images.deleteMany(Filters.eq("ownerId", ownerIdentifier)) // Rimuove l'immagine esistente
+        val result = images.insertOne(StoredImage(ownerId = ownerIdentifier, base64 = base64Image))
         return result.wasAcknowledged()
     }
-
 
     override suspend fun updateHouseImages(houseId: String, base64Images: List<String>): Boolean {
         if (base64Images.size > 2) throw IllegalArgumentException("Massimo 2 immagini consentite")

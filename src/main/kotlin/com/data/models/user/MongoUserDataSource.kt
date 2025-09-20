@@ -1,5 +1,6 @@
 package com.data.models.user
 
+import com.data.models.image.ImageDataSource
 import com.data.models.user.*
 import com.data.requests.AuthRequest
 
@@ -7,7 +8,9 @@ import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
+import com.security.hashing.HashingService
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
 
 
 class MongoUserDataSource(
@@ -65,6 +68,41 @@ class MongoUserDataSource(
 
     }
 
+    override suspend fun getAllUsers(): List<User> {
+
+        return try {
+            val result = users.find(Filters.ne("role", "SUPER_ADMIN")).toList()
+
+            if (result.isEmpty()) {
+                println("Nessun utente trovato")
+            } else {
+                println("Recuperati ${result.size} utenti.")
+            }
+
+            result
+        } catch (e: Exception) {
+            println("Errore durante il recupero degli utenti ${e.message}")
+            emptyList()
+        }
+    }
+
+    override suspend fun getFilteredUsers(role : String): List<User> {
+        return try {
+            val result = users.find(Filters.eq("role", role)).toList()
+
+            if (result.isEmpty()) {
+                println("Nessun utente trovato con ruolo: $role")
+            } else {
+                println("Recuperati ${result.size} utenti con ruolo '$role'.")
+            }
+
+            result
+        } catch (e: Exception) {
+            println("Errore durante il recupero degli utenti con ruolo $role: ${e.message}")
+            emptyList()
+        }
+    }
+
     override suspend fun updateUsername(email: String, username: String): Boolean {
         val updateResult = users.updateOne(
             Filters.eq("email", email),
@@ -97,14 +135,20 @@ class MongoUserDataSource(
         return updateResult.wasAcknowledged()
     }
 
-    override suspend fun ensureSysAdmin() {
+    override suspend fun ensureSysAdmin( hashingService: HashingService, imageDataSource: ImageDataSource) {
 
         val email = "admin@system.com"
         val existing = getUserByEmail(email)
 
         if (existing == null) {
-            val sysAdmin = User()
+            val hashed = hashingService.generateSaltedHash("admin123")
+
+            val sysAdmin = User(hashed.hash!!, hashed.salt!!)
+
+            imageDataSource.updatePpById(sysAdmin.id.toString(), "iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAIAAAADnC86AAAAL0lEQVR4nO3NAQ0AAAQAMPSvIScxbPYXeE7HibppxWKxWCwWi8VisVgsFovFP+MFC30B9H8Mi5gAAAAASUVORK5CYII=")
+
             insertUser(sysAdmin)
+
             println("Creato System Admin di default con email: $email")
         } else {
             println("System Admin già presente: $email")

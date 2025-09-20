@@ -23,10 +23,11 @@ import com.plugins.configureSerialization
 import com.plugins.*
 import com.security.token.GitHubOAuthService
 import com.service.GeoapifyService
-import com.service.mailservice.configureClient
+import com.service.mailservice.MailerSendService
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.jackson.*
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.netty.*
@@ -39,9 +40,6 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
 
-
-    configureClient() // for MailerSender in Service
-
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
     val agencyDataSource = MongoAgencyDataSource(database)
@@ -49,8 +47,18 @@ fun Application.module() {
     val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
     val appointmentCollection = database.getCollection<Appointment>("appointments")
     val notificationCollection = database.getCollection<Notification>("notifications")
+
+    val tokenService = JwtTokenService()
+    val tokenConfig = TokenConfig(
+        issuer = environment.config.property("jwt.issuer").getString(),
+        audience = environment.config.property("jwt.audience").getString(),
+        expiresIn = 365L * 1000L * 60L * 60L * 24L,
+        secret = System.getenv("JWT_SECRET")
+    )
+    val hashingService = SHA256HashingService()
+
     runBlocking {
-        userDataSource.ensureSysAdmin()
+        userDataSource.ensureSysAdmin(hashingService, imageDataSource)
     }
 
     val sharedHttpClient = HttpClient(CIO) {
@@ -62,6 +70,20 @@ fun Application.module() {
             })
         }
     }
+
+    val mailerSendHttpClient = HttpClient {
+        install(ContentNegotiation) {
+            jackson()
+        }
+    }
+
+
+    val mailerSendService = MailerSendService(
+        token = System.getenv("MAILERSEND_TOKEN"),
+        baseUrl = System.getenv("MAILERSEND_BASE_URL"),
+        httpClient = mailerSendHttpClient,
+    )
+
     val geoapifyService = GeoapifyService(
         apiKey = System.getenv("GEOAPIFY_KEY"),
         httpClient = sharedHttpClient
@@ -75,6 +97,7 @@ fun Application.module() {
 
     // Appointments
     val appointmentDataSource = MongoAppointmentDataSource(appointmentCollection)
+
     // Notifications
     val notificationDataSource = MongoNotificationDataSource(notificationCollection)
 
@@ -87,27 +110,20 @@ fun Application.module() {
     )
 
 
-    val tokenService = JwtTokenService()
-    val tokenConfig = TokenConfig(
-        issuer = environment.config.property("jwt.issuer").getString(),
-        audience = environment.config.property("jwt.audience").getString(),
-        expiresIn = 365L * 1000L * 60L * 60L * 24L,
-        secret = System.getenv("JWT_SECRET")
-    )
-    val hashingService = SHA256HashingService()
+
 
     configureSerialization()
 
     configureSecurity(tokenConfig)
 
     configureRouting(
+        mailerSendService,
         agencyDataSource,
         userDataSource,
         hashingService,
         tokenService,
         tokenConfig,
         gitHubOAuthService,
-        sharedHttpClient,
         imageDataSource,
         propertyListingDataSource,
         appointmentDataSource,

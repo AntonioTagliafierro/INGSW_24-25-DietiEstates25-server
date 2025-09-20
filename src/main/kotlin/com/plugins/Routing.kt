@@ -13,19 +13,20 @@ import com.security.token.GitHubOAuthService
 import com.security.token.TokenConfig
 import com.security.token.TokenService
 import com.service.GeoapifyService
+import com.service.mailservice.MailerSendService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
 fun Application.configureRouting(
+    mailerSendService: MailerSendService,
     agencyDataSource: AgencyDataSource,
     userDataSource: UserDataSource,
     hashingService: HashingService,
     tokenService: TokenService,
     tokenConfig: TokenConfig,
     gitHubOAuthService: GitHubOAuthService,
-    httpClient: HttpClient,
     imageDataSource: ImageDataSource,
     propertyListingDataSource: PropertyListingDataSource,
     appointmentDataSource: AppointmentDataSource,
@@ -33,11 +34,6 @@ fun Application.configureRouting(
 ) {
 
 
-
-    val geoapifyService = GeoapifyService(
-        apiKey = System.getenv("GEOAPIFY_KEY")?: "dummy_key",
-        httpClient = HttpClient(CIO)
-    )
     routing {
         userAuth(
             hashingService,
@@ -64,13 +60,19 @@ fun Application.configureRouting(
         )
         state()
 
-        imageRoutes( imageDataSource )
+        imageRoutes( imageDataSource , userDataSource )
 
         propertyListingRoutes(propertyListingDataSource)
 
         appointmentRoutes(appointmentDataSource, notificationDataSource)
 
         profileRoutes(userDataSource, hashingService)
+
+        admin(
+            hashingService,
+            userDataSource,
+            mailerSendService
+        )
     }
 }
 

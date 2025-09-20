@@ -9,7 +9,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun Route.imageRoutes(
-    imageDataSource: ImageDataSource
+    imageDataSource: ImageDataSource,
+    userDataSource: UserDataSource
 ) {
 
     post("/user/profile/image") {
@@ -18,10 +19,20 @@ fun Route.imageRoutes(
             return@post
         }
 
-        val result = imageDataSource.updateIdProfileImage(
-            profilePicUserId = request.ownerId!!,
-            base64Image = request.base64Images.first(),
-        )
+        val result = if (request.ownerId != null) {
+            imageDataSource.updatePpById(
+                ownerIdentifier = request.ownerId,
+                base64Image = request.base64Images.first(),
+            )
+        } else {
+
+            val user = userDataSource.getUserByEmail(request.ownerEmail!!)
+
+            imageDataSource.updatePpById(
+                ownerIdentifier = user!!.id.toString(),
+                base64Image = request.base64Images.first(),
+            )
+        }
 
         if (result)
             call.respond(HttpStatusCode.OK, "Immagine profilo aggiornata.")
@@ -40,7 +51,7 @@ fun Route.imageRoutes(
         val imageBase64 = imageDataSource.getUserProfileImage(userId)
 
         if (imageBase64 == null) {
-            call.respond(HttpStatusCode.NotFound, "Immagine non trovata")
+            call.respond(HttpStatusCode.Conflict, "Nessuna immagine associata all'utente")
         } else {
             call.respondText(imageBase64, ContentType.Text.Plain)
         }

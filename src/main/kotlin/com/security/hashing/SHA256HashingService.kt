@@ -22,7 +22,7 @@ class SHA256HashingService: HashingService {
 
     override fun verify(value: String, saltedHash: SaltedHash): Boolean {
 
-        val combined = saltedHash.salt?.trim()+value.trim()
+        val combined = saltedHash.salt!!.trim()+value.trim()
 
         val hashRequest = DigestUtils.sha256Hex(combined)
 

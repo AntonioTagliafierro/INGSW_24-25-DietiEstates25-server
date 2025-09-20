@@ -5,6 +5,7 @@ import com.security.serializer.ObjectIdSerializer
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
 import kotlinx.serialization.SerialName
+import kotlin.random.Random
 
 @Serializable
 enum class Role(val label: String) {
@@ -42,18 +43,17 @@ open class User(
     val password: String? = null,
     val salt:   String? = null
 ) {
-    // costruttore (admin)
-    constructor() : this(
+    // costruttore (admin )
+    constructor(password: String , salt : String) : this(
         id = ObjectId.get(),
         "Admin",
         "admin@system.com",
         "System",
         "Admin",
         role = Role.SUPER_ADMIN,
-        "admin123",
-        null
+        password = password,
+        salt = salt
     )
-
 
     // 1° costruttore (third‐party user)
     constructor(email: String, password: String?, salt: String?, username: String?) : this(
@@ -75,7 +75,7 @@ open class User(
         salt     = salt
     )
 
-    // 2° costruttore (agency user)
+    // 3° costruttore (agency user e suppdmin)
     constructor(email: String, password: String?, salt: String?, role: Role) : this(
         id       = ObjectId.get(),
         username = email.substringBefore("@"),
@@ -91,6 +91,14 @@ open class User(
 
     fun getUsername():String{
         return username
+    }
+
+    fun generateRandomPassword(): String {
+        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%^&*"
+        val length = Random.nextInt(4, 6 + 1)
+        return (1..length)
+            .map { chars.random() }
+            .joinToString("")
     }
 
 }
