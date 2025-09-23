@@ -9,7 +9,7 @@ import com.data.models.user.UserDataSource
 import com.data.requests.AuthRequest
 import com.data.models.user.*
 import com.data.requests.GitHubAuthRequest
-import com.data.requests.SuppAdminRequest
+import com.data.requests.AdminRequest
 import com.data.requests.UserInfoRequest
 import com.data.responses.ListResponse
 import com.data.responses.TokenResponse
@@ -156,13 +156,13 @@ fun Route.userAuth(
         call.respond(HttpStatusCode.OK, TokenResponse(token = token))
     }
 
-
 }
 
 fun Route.admin(
     hashingService: HashingService,
     userDataSource: UserDataSource,
-    mailerSendService : MailerSendService
+    mailerSendService : MailerSendService,
+    agencyDataSource: AgencyDataSource
 ){
     route("/admin") {
 
@@ -174,10 +174,10 @@ fun Route.admin(
                     return@get
                 }
 
-                if (request.typeRequest == "filtered") {
+                if (request.typeRequest == "super_admin") {
 
                     val filteredUsers = try {
-                        userDataSource.getFilteredUsers(request.value)
+                        userDataSource.getUsersByRole(request.value)
                     } catch (e: Exception) {
                         call.respond(
                             HttpStatusCode.InternalServerError,
@@ -191,7 +191,35 @@ fun Route.admin(
                         ListResponse(success = true, data = filteredUsers)
                     )
 
-                } else {
+                }else if( request.typeRequest == "agent_user"){
+
+                    val filteredUsers = try {
+                        val agency = agencyDataSource.getAgencyByEmail(request.email)
+                        if (agency == null) {
+                            call.respond(HttpStatusCode.BadRequest, "Agenzia non trovata.")
+                            return@get
+                        }
+
+                        val userIds = agencyDataSource.getAgencyUserIds(agency.id.toString())
+                        if (userIds.isEmpty()) {
+                            call.respond(HttpStatusCode.OK, ListResponse(success = true, data = emptyList<User>()))
+                            return@get
+                        }
+
+                        userDataSource.getAgencyUsers(userIds)
+                    } catch (e: Exception) {
+                        call.respond(
+                            HttpStatusCode.InternalServerError,
+                            ListResponse<List<User>>(success = false, message = "Errore DB: ${e.localizedMessage}")
+                        )
+                        return@get
+                    }
+
+                    call.respond(
+                        HttpStatusCode.OK,
+                        ListResponse(success = true, data = filteredUsers)
+                    )
+                }else{
 
                     val users = try {
                         userDataSource.getAllUsers()
@@ -208,13 +236,28 @@ fun Route.admin(
                         ListResponse(success = true, data = users)
                     )
                 }
+            }
 
+            get("/by-email") {
+                val email = call.request.queryParameters["email"]
 
+                if (email.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "Parametro 'email' mancante o vuoto")
+                    return@get
+                }
+
+                val user = userDataSource.getUserByEmail(email)
+
+                if (user != null) {
+                    call.respond(HttpStatusCode.OK, mapOf("id" to user.id.toString()))
+                } else {
+                    call.respond(HttpStatusCode.NotFound, "Nessun utente trovato per email=$email")
+                }
             }
 
             post{
 
-                val request = runCatching { call.receiveNullable<SuppAdminRequest>() }.getOrNull() ?: run {
+                val request = runCatching { call.receiveNullable<AdminRequest>() }.getOrNull() ?: run {
                     call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
                     return@post
                 }
@@ -231,9 +274,7 @@ fun Route.admin(
                     return@post
                 }
 
-
-                val username = request.usernameSuppAdmin
-                if (userDataSource.getUserByEmail("$username@system.com") != null) {
+                if (userDataSource.getUserByEmail(request.email) != null ) {
                     call.respond(HttpStatusCode.Unauthorized, "Suppadmin gia esistente.")
                     return@post
                 }
@@ -241,20 +282,20 @@ fun Route.admin(
                 val password = admin.generateRandomPassword()
                 val saltedHash = hashingService.generateSaltedHash(password)
 
-                val suppAdmin = User(
-                    email = "$username@system.com",
-                    role = Role.SUPPORT_ADMIN,
+                val user = User(
+                    email = request.email,
+                    role = if(request.email.contains("system") ) Role.SUPPORT_ADMIN else Role.AGENT_USER,
                     password = saltedHash.hash!!,
                     salt = saltedHash.salt!!
                 )
 
-                val wasAcknowledged = userDataSource.insertUser(suppAdmin)
+                val wasAcknowledged = userDataSource.insertUser(user)
                 if (!wasAcknowledged) {
                     call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
                     return@post
                 }
 
-                val result = mailerSendService.sendSuppAdminEmail(request.suppAdminEmail, username, password)
+                val result = mailerSendService.sendSuppAdminEmail(request.suppAdminEmail, user.getEmail(), password)
 
                 if (result.status == Accepted){
                     call.respond(HttpStatusCode.OK, "Credenziali inviate all'email ${request.suppAdminEmail} con successo")
@@ -275,6 +316,7 @@ fun Route.agencyRequests(
     hashingService: HashingService,
     userDataSource: UserDataSource,
     agencyDataSource: AgencyDataSource,
+    imageDataSource: ImageDataSource
 ){
     route("/agency") {
 
@@ -294,16 +336,19 @@ fun Route.agencyRequests(
                         email = request.email,
                         password = saltedHash.hash,
                         salt = saltedHash.salt,
-                        role = Role.PENDING_AGENCY_ADMIN
+                        role = Role.PENDING_AGENT_ADMIN
                     )
                 )
 
                 if (!wasAcknowledged) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                    call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento user")
                     return@post
                 }
 
                 user = userDataSource.getUserByEmail(request.email)
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, "Questa email esiste già")
+                return@post
             }
 
             var wasAcknowledged = agencyDataSource.insertAgency(
@@ -315,26 +360,27 @@ fun Route.agencyRequests(
             )
 
             if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento agency")
                 return@post
             }
+
             val agency = agencyDataSource.getAgency(request.agencyName)
 
-            wasAcknowledged = agencyDataSource.insertAgencyUser(
-                AgencyUser(
-                    agencyId = agency!!.id.toString(),
-                    userId = user.id.toString()
-                )
+            val agencyUser = AgencyUser(
+                agencyId = agency!!.id.toString(),
+                userId = user.id.toString()
             )
 
+            wasAcknowledged = agencyDataSource.insertAgencyUser(agencyUser)
+
             if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento agencyUser")
                 return@post
             }
 
-            call.respond(HttpStatusCode.OK, "Operazione completata con successo")
-
+            call.respond(HttpStatusCode.OK, agencyUser)
         }
+
 
         post("/request-decision") {
             val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
@@ -350,7 +396,7 @@ fun Route.agencyRequests(
 
             if (request.typeRequest == "accepted") {
 
-                val roleUpdated = userDataSource.updateUserRole(user.getEmail(), Role.AGENCY_ADMIN)
+                val roleUpdated = userDataSource.updateUserRole(user.getEmail(), Role.AGENT_ADMIN)
                 if (!roleUpdated) {
                     call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update del ruolo")
                     return@post
@@ -397,6 +443,98 @@ fun Route.agencyRequests(
                 ListResponse(success = true, data = agencies)
             )
         }
+
+        get {
+            val userId = call.request.queryParameters["userId"]
+
+            if (userId.isNullOrBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    "Parametro userId mancante"
+                )
+                return@get
+            }
+
+            try {
+                val agency = agencyDataSource.getAgencyByAgentId(userId)
+
+                if (agency == null) {
+                    call.respond(
+                        HttpStatusCode.NotFound,
+                        "Nessuna agenzia trovata per userId=$userId"
+                    )
+                } else {
+                    call.respond(
+                        HttpStatusCode.OK,
+                        agency
+                    )
+                }
+            } catch (e: Exception) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    "Errore durante il recupero dell'agenzia: ${e.localizedMessage}"
+                )
+            }
+        }
+
+        put("/pic") {
+            try {
+                val params = call.receive<Map<String, String>>()  // legge il JSON
+                val agencyId = params["agencyId"]
+                val profilePic = params["profilePic"]
+
+                if (agencyId.isNullOrBlank() || profilePic.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, "Parametri mancanti: agencyId e profilePic obbligatori")
+                    return@put
+                }
+
+                val result = imageDataSource.updatePpById(agencyId, profilePic)
+
+                if (result) {
+                    call.respond(HttpStatusCode.OK,( "Operazione completata"))
+                } else {
+                    call.respond(HttpStatusCode.BadRequest, ( "Errore sconosciuto"))
+                }
+
+            } catch (e: Exception) {
+                call.respond(HttpStatusCode.InternalServerError, "Errore server: ${e.localizedMessage}")
+            }
+        }
+
+        post("/agent"){
+            val request = kotlin.runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
+                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                return@post
+            }
+
+            val agent = userDataSource.getUserByEmail(request.email)
+            if (agent == null) {
+                call.respond(HttpStatusCode.NotFound, "Nessun utente trovato con email ${request.email}")
+                return@post
+            }
+
+            val agency = agencyDataSource.getAgencyByEmail(request.value)
+            if (agency == null) {
+                call.respond(HttpStatusCode.NotFound, "Nessuna agenzia trovata con email ${request.value}")
+                return@post
+            }
+
+
+            val wasAcknowledged = agencyDataSource.insertAgencyUser(
+                AgencyUser(
+                    agencyId = agency.id.toString(),
+                    userId = agent.id.toString()
+                )
+            )
+
+            if (!wasAcknowledged) {
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                return@post
+            }
+
+            call.respond(HttpStatusCode.OK, "Operazione completata con successo")
+        }
+
 
     }
 }

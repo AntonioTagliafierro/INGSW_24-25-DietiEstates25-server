@@ -6,8 +6,6 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.http.HttpStatusCode.Companion.Accepted
-import io.ktor.http.content.*
-import io.ktor.http.headers
 
 class MailerSendService (
     val token : String,
@@ -15,19 +13,19 @@ class MailerSendService (
     val httpClient: HttpClient
 ){
 
-//sendSuppAdminEmail(request.suppAdminEmail, username, password)
     suspend fun sendSuppAdminEmail(
         recipientEmail: String,
-        recipientName: String,
+        email: String,
         password: String
     ): HttpResponse {
         val subject = "Welcome to My App"
+        val username = email.substringBefore("@")
 
         val personalization = EmailRequest.CustomPersonalization(
             email = recipientEmail,
             data = mapOf(
-                "name" to recipientName,
-                "email" to "$recipientName@system.com",
+                "name" to username,
+                "email" to email,
                 "password" to password,
                 "support_email" to "dietiestates25@gmail.com"
             )
@@ -41,7 +39,7 @@ class MailerSendService (
             to = listOf(
                 EmailRequest.Recipient(
                     email = recipientEmail,
-                    name = recipientName
+                    name = username
                 )
             ),
             subject = subject,

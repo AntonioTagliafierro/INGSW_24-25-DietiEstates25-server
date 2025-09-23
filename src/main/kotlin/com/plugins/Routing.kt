@@ -44,7 +44,8 @@ fun Application.configureRouting(
         agencyRequests(
             hashingService,
             userDataSource,
-            agencyDataSource
+            agencyDataSource,
+            imageDataSource
         )
         authenticate(
             userDataSource
@@ -71,7 +72,8 @@ fun Application.configureRouting(
         admin(
             hashingService,
             userDataSource,
-            mailerSendService
+            mailerSendService,
+            agencyDataSource
         )
     }
 }

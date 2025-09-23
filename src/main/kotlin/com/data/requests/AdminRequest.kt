@@ -1,8 +1,8 @@
 package com.data.requests
 @kotlinx.serialization.Serializable
-data class SuppAdminRequest(
+data class AdminRequest(
     val adminEmail: String,
     val adminId: String,
     val suppAdminEmail: String,
-    val usernameSuppAdmin: String
+    val email : String
 )

@@ -19,20 +19,11 @@ fun Route.imageRoutes(
             return@post
         }
 
-        val result = if (request.ownerId != null) {
-            imageDataSource.updatePpById(
-                ownerIdentifier = request.ownerId,
+        val result = imageDataSource.updatePpById(
+                ownerIdentifier = request.ownerId!!,
                 base64Image = request.base64Images.first(),
             )
-        } else {
 
-            val user = userDataSource.getUserByEmail(request.ownerEmail!!)
-
-            imageDataSource.updatePpById(
-                ownerIdentifier = user!!.id.toString(),
-                base64Image = request.base64Images.first(),
-            )
-        }
 
         if (result)
             call.respond(HttpStatusCode.OK, "Immagine profilo aggiornata.")
@@ -55,6 +46,7 @@ fun Route.imageRoutes(
         } else {
             call.respondText(imageBase64, ContentType.Text.Plain)
         }
+
     }
 
     post("/house/image") {
