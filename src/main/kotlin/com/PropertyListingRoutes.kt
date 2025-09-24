@@ -13,7 +13,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSource) {
-    route("/propertiesListing") {
+    route("/propertylisting") {
 
         post("/addpropertylisting") {
             val request = call.receive<PropertyListingRequest>()
@@ -55,6 +55,19 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             }
 
             val listings = propertyListingDataSource.getListingWithinRadius(lat, lon, radius)
+            val response = listings.map { it.toResponse() }
+            call.respond(HttpStatusCode.OK, response)
+        }
+
+        get("/search") {
+            val type = call.parameters["type"]
+            val city = call.parameters["city"]
+
+            if (type.isNullOrBlank() || city.isNullOrBlank()) {
+                return@get call.respond(HttpStatusCode.BadRequest, "Missing type or city parameter")
+            }
+
+            val listings = propertyListingDataSource.getListingsByTypeAndCity(type, city)
             val response = listings.map { it.toResponse() }
             call.respond(HttpStatusCode.OK, response)
         }

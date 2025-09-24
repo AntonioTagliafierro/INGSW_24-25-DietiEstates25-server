@@ -78,4 +78,20 @@ class MongoPropertyListingDataSource(
         }
     }
 
+    override suspend fun getListingsByTypeAndCity(type: String, city: String): List<PropertyListing> = withContext(Dispatchers.IO) {
+        try {
+            collection.find(
+                Filters.and(
+                    Filters.eq("type", type),
+                    Filters.eq("city", city)
+                )
+            ).toList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+
+
 }
