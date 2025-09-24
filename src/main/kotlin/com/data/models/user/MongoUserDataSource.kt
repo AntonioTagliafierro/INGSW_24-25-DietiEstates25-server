@@ -142,6 +142,13 @@ class MongoUserDataSource(
         return updateResult.wasAcknowledged()
     }
 
+    override suspend fun deleteUser(userEmail: String): Boolean {
+
+        val deleteUser = users.deleteOne(Filters.eq("email", userEmail))
+
+        return deleteUser.deletedCount > 0
+    }
+
     override suspend fun updateFullName(email: String, value: String): Boolean {
         val parts = value.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
 

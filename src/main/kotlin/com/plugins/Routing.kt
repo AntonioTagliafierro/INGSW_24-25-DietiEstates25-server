@@ -1,8 +1,8 @@
 package com.plugins
 
 import com.*
+import com.data.models.activity.ActivityDataSource
 import com.data.models.agency.AgencyDataSource
-import com.data.models.agency.MongoAgencyDataSource
 import com.data.models.appointment.AppointmentDataSource
 import com.data.models.image.ImageDataSource
 import com.data.models.notification.NotificationDataSource
@@ -12,10 +12,7 @@ import com.security.hashing.HashingService
 import com.security.token.GitHubOAuthService
 import com.security.token.TokenConfig
 import com.security.token.TokenService
-import com.service.GeoapifyService
 import com.service.mailservice.MailerSendService
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
 
@@ -30,7 +27,8 @@ fun Application.configureRouting(
     imageDataSource: ImageDataSource,
     propertyListingDataSource: PropertyListingDataSource,
     appointmentDataSource: AppointmentDataSource,
-    notificationDataSource: NotificationDataSource
+    notificationDataSource: NotificationDataSource,
+    activityDataSource: ActivityDataSource,
 ) {
 
 
@@ -45,7 +43,8 @@ fun Application.configureRouting(
             hashingService,
             userDataSource,
             agencyDataSource,
-            imageDataSource
+            imageDataSource,
+            activityDataSource
         )
         authenticate(
             userDataSource
@@ -61,19 +60,20 @@ fun Application.configureRouting(
         )
         state()
 
-        imageRoutes( imageDataSource , userDataSource )
+        imageRoutes( imageDataSource )
 
         propertyListingRoutes(propertyListingDataSource)
 
         appointmentRoutes(appointmentDataSource, notificationDataSource)
 
-        profileRoutes(userDataSource, hashingService)
+        profileRoutes(userDataSource, hashingService, activityDataSource)
 
         admin(
             hashingService,
             userDataSource,
             mailerSendService,
-            agencyDataSource
+            agencyDataSource,
+            activityDataSource
         )
     }
 }

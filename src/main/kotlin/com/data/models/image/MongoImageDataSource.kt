@@ -21,6 +21,12 @@ class MongoImageDataSource(
         return result.wasAcknowledged()
     }
 
+    override suspend fun deleteImages(userId: String): Boolean {
+        val result = images.deleteMany(Filters.eq("ownerId", userId))
+
+        return result.wasAcknowledged()
+    }
+
     override suspend fun updateHouseImages(houseId: String, base64Images: List<String>): Boolean {
         if (base64Images.size > 2) throw IllegalArgumentException("Massimo 2 immagini consentite")
         images.deleteMany(Filters.eq("ownerId", houseId)) // Rimuove immagini vecchie

@@ -10,7 +10,6 @@ import io.ktor.server.routing.*
 
 fun Route.imageRoutes(
     imageDataSource: ImageDataSource,
-    userDataSource: UserDataSource
 ) {
 
     post("/user/profile/image") {
