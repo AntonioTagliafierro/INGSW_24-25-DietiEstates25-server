@@ -86,8 +86,9 @@ class MongoUserDataSource(
         }
     }
 
-    override suspend fun getFilteredUsers(role : String): List<User> {
+    override suspend fun getUsersByRole(role : String): List<User> {
         return try {
+
             val result = users.find(Filters.eq("role", role)).toList()
 
             if (result.isEmpty()) {
@@ -99,6 +100,28 @@ class MongoUserDataSource(
             result
         } catch (e: Exception) {
             println("Errore durante il recupero degli utenti con ruolo $role: ${e.message}")
+            emptyList()
+        }
+    }
+
+    override suspend fun getAgencyUsers(userIds: List<String>): List<User> {
+        return try {
+            val result = users.find(
+                Filters.and(
+                    Filters.`in`("id", userIds),
+                    Filters.ne("role", "AGENT_ADMIN")
+                )
+            ).toList()
+
+            if (result.isEmpty()) {
+                println("Nessun utente trovato con gli id: $userIds (esclusi AGENT_ADMIN)")
+            } else {
+                println("Recuperati ${result.size} utenti per l'agenzia (esclusi AGENT_ADMIN)")
+            }
+
+            result
+        } catch (e: Exception) {
+            println("Errore durante il recupero degli utenti: ${e.localizedMessage}")
             emptyList()
         }
     }
@@ -117,6 +140,13 @@ class MongoUserDataSource(
             Updates.set("role", role.label)
         )
         return updateResult.wasAcknowledged()
+    }
+
+    override suspend fun deleteUser(userEmail: String): Boolean {
+
+        val deleteUser = users.deleteOne(Filters.eq("email", userEmail))
+
+        return deleteUser.deletedCount > 0
     }
 
     override suspend fun updateFullName(email: String, value: String): Boolean {

@@ -13,11 +13,11 @@ interface UserDataSource {
     suspend fun updateUserPassword(email: String, newHash: String?, newSalt: String?): Boolean
     suspend fun getUserById(userId: String): User?
     suspend fun getAllUsers(): List<User>
-    suspend fun getFilteredUsers(role : String): List<User>
-
+    suspend fun getUsersByRole(role : String): List<User>
+    suspend fun getAgencyUsers(userIds: List<String>): List<User>
     suspend fun updateUsername(email: String, username: String): Boolean
     suspend fun updateFullName(email: String, value: String): Boolean
     suspend fun updateUserRole(email: String , role : Role) :Boolean
-
+    suspend fun deleteUser(userEmail: String): Boolean
     suspend fun ensureSysAdmin(hashingService: HashingService, imageDataSource: ImageDataSource)
 }

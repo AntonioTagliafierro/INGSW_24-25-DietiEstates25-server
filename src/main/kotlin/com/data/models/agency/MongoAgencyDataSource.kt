@@ -15,6 +15,32 @@ class MongoAgencyDataSource (
     private val agencies = db.getCollection<Agency>("agency")
     private val agencyUsers = db.getCollection<AgencyUser>("agencyUser")
 
+
+    override suspend fun getAgencyByAgentId(agentId: String): Agency? {
+        return try {
+
+            val relation = agencyUsers.find(Filters.eq("userId", agentId)).firstOrNull()
+
+            if (relation == null) {
+                println("Nessuna relazione trovata per userId=$agentId")
+                return null
+            }
+
+            val agency = agencies.find(Filters.eq("id", relation.agencyId)).firstOrNull()
+
+            if (agency == null) {
+                println("Nessuna agenzia trovata con id=${relation.agencyId}")
+            } else {
+                println("Agenzia trovata: ${agency.name} (${agency.id})")
+            }
+
+            agency
+        } catch (e: Exception) {
+            println("Errore durante il recupero agenzia per userId=$agentId: ${e.localizedMessage}")
+            null
+        }
+    }
+
     override suspend fun insertAgency( agency: Agency): Boolean {
         println("Inserendo agenzia: $agency")
 
@@ -91,5 +117,38 @@ class MongoAgencyDataSource (
         return findAgency
     }
 
+    override suspend fun getAgencyByEmail(email: String): Agency? {
+        return try {
+            val agency = agencies.find(Filters.eq("agencyEmail", email)).firstOrNull()
+
+            if (agency == null) {
+                println("Nessuna agenzia trovata con email: $email")
+            } else {
+                println("Agenzia trovata: ${agency.name} (${agency.id})")
+            }
+
+            agency
+        } catch (e: Exception) {
+            println("Errore durante il recupero dell'agenzia con email $email: ${e.localizedMessage}")
+            null
+        }
+    }
+
+    override suspend fun getAgencyUserIds(agencyId: String): List<String> {
+        return try {
+            val results = agencyUsers.find(Filters.eq("agencyId", agencyId)).toList()
+
+            if (results.isEmpty()) {
+                println("Nessun utente trovato per l'agenzia $agencyId")
+                emptyList()
+            } else {
+                println("Recuperati ${results.size} utenti per l'agenzia $agencyId")
+                results.map { it.userId }
+            }
+        } catch (e: Exception) {
+            println("Errore durante il recupero degli utenti per agenzia $agencyId: ${e.localizedMessage}")
+            emptyList()
+        }
+    }
 
 }

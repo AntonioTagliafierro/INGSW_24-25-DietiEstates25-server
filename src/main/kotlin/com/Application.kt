@@ -1,5 +1,6 @@
 package com
 
+import com.data.models.activity.MongoActivityDataSource
 import com.data.models.agency.MongoAgencyDataSource
 import com.data.models.appointment.Appointment
 import com.data.models.appointment.MongoAppointmentDataSource
@@ -45,9 +46,12 @@ fun Application.module() {
     val userDataSource = MongoUserDataSource(database)
     val agencyDataSource = MongoAgencyDataSource(database)
     val imageDataSource = MongoImageDataSource(database)
+    val activityDataSource = MongoActivityDataSource(database)
+
     val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
     val appointmentCollection = database.getCollection<Appointment>("appointments")
     val notificationCollection = database.getCollection<Notification>("notifications")
+
 
     val tokenService = JwtTokenService()
     val tokenConfig = TokenConfig(
@@ -110,9 +114,6 @@ fun Application.module() {
         httpClient = sharedHttpClient
     )
 
-
-
-
     configureSerialization()
 
     configureSecurity(tokenConfig)
@@ -128,7 +129,8 @@ fun Application.module() {
         imageDataSource,
         propertyListingDataSource,
         appointmentDataSource,
-        notificationDataSource
+        notificationDataSource,
+        activityDataSource
     )
 
     configureMonitoring()

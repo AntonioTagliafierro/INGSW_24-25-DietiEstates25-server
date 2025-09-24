@@ -1,8 +1,11 @@
 package com
 
+import com.data.models.activity.Activity
+import com.data.models.activity.ActivityDataSource
 import com.data.models.user.UserDataSource
 import com.data.requests.AuthRequest
 import com.data.requests.UserInfoRequest
+import com.data.responses.ListResponse
 import com.security.hashing.HashingService
 import com.security.hashing.SaltedHash
 import io.ktor.http.*
@@ -13,7 +16,8 @@ import io.ktor.server.routing.*
 
 fun Route.profileRoutes(
     userDataSource: UserDataSource,
-    hashingService: HashingService
+    hashingService: HashingService,
+    activityDataSource: ActivityDataSource
 ) {
 
     route("/user/profile") {
@@ -101,6 +105,35 @@ fun Route.profileRoutes(
                 call.respond(HttpStatusCode.OK, "User info updated successfully")
             }
         }
+
+        get("/activities") {
+            val userId = call.request.queryParameters["userId"]
+
+            if (userId.isNullOrBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ListResponse<List<Activity>>(success = false, data = null, message = "Missing or invalid userId")
+                )
+                return@get
+            }
+
+            val activities = activityDataSource.getAllActivityByUser(userId)
+
+            if (activities.isEmpty()) {
+                call.respond(
+                    HttpStatusCode.OK, // oppure NotFound se vuoi differenziare
+                    ListResponse<List<Activity>>(success = false, data = null, message = "No activities found for userId=$userId")
+                )
+            } else {
+                call.respond(
+                    HttpStatusCode.OK,
+                    ListResponse(success = true, data = activities, message = null)
+                )
+            }
+        }
+
+
+
     }
 
 }
