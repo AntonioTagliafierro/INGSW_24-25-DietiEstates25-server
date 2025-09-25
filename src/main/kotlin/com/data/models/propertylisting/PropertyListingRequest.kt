@@ -38,13 +38,19 @@ data class PropertyRequest(
     val propertyPicture: String? = null
 )
 
+fun String.toType(): Type =
+    Type.values().find { it.label.equals(this, ignoreCase = true) }
+        ?: throw IllegalArgumentException("Unknown Type: $this")
 
+fun String.toEnergyClass(): EnergyClass =
+    EnergyClass.values().find { it.label.equals(this, ignoreCase = true) }
+        ?: throw IllegalArgumentException("Unknown EnergyClass: $this")
 
 fun PropertyListingRequest.toEntity(): PropertyListing {
     return PropertyListing(
         id = ObjectId(), // MongoDB assegna un nuovo ObjectId
         title = this.title,
-        type = Type.fromLabel(this.type), // converte la stringa in enum
+        type = this.type.toType(),
         price = this.price,
         property = this.property.toEntity(),
         agentEmail = this.agentEmail
@@ -64,7 +70,7 @@ fun PropertyRequest.toEntity(): Property {
         size = this.size,
         numberOfRooms = this.numberOfRooms,
         numberOfBathrooms = this.numberOfBathrooms,
-        energyClass = EnergyClass.fromLabel(this.energyClass),
+        energyClass = this.energyClass.toEnergyClass(),
         parking = this.parking,
         garden = this.garden,
         elevator = this.elevator,
@@ -78,3 +84,4 @@ fun PropertyRequest.toEntity(): Property {
         indicators = emptyList() // lo riempirai con GeoapifyService
     )
 }
+

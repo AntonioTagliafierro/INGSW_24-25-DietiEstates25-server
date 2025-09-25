@@ -37,18 +37,19 @@ class MongoPropertyListingDataSource(
             emptyList()
         }
     }
+//= withContext(Dispatchers.IO)
+    override suspend fun getListingsByEmail(email: String): List<PropertyListing>  {
 
-    override suspend fun getListingsByEmail(email: String): List<PropertyListing> = withContext(Dispatchers.IO) {
+        return try {
 
-        try {
-
-            collection.find(Filters.eq("email", email)).toList()
+            collection.find(Filters.eq("agentEmail", email)).toList()
 
         } catch (e: Exception) {
 
             e.printStackTrace()
             emptyList()
         }
+
 
     }
 

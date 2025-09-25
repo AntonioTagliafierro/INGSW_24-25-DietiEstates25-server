@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class PropertyListingResponse(
-    val id: String?,   // può essere null prima che Mongo lo assegni
+    val id: String?,
     val title: String,
     val type: String,
     val price: Float,

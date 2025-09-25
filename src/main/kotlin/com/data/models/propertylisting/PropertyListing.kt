@@ -1,12 +1,16 @@
 package com.data.models.propertylisting
 
 
+import com.security.serializer.ObjectIdSerializer
+import kotlinx.serialization.SerialName
 import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
 import kotlinx.serialization.Serializable
 
+@Serializable
 data class PropertyListing(
-    @BsonId val id: ObjectId = ObjectId(),
+    @Serializable(with = ObjectIdSerializer::class)
+    val id: ObjectId = ObjectId.get(),
     val title: String,
     val type: Type?,
     val price: Float,
@@ -14,14 +18,18 @@ data class PropertyListing(
     val agentEmail: String
 )
 
+@Serializable
 enum class Type(val label: String) {
-    A("Rent"),
-    B("Sell");
-
-    companion object {
-        fun fromLabel(label: String): Type? = values().find { it.label == label }
-    }
+    @SerialName("Rent")
+    RENT("Rent"),
+    @SerialName("Sell")
+    SELL("Sell")
 }
+
+//    companion object {
+//        fun fromLabel(label: String): Type? = values().find { it.label == label }
+//    }
+
 
 @Serializable
 data class GeoLocation(
@@ -29,6 +37,7 @@ data class GeoLocation(
     val coordinates: List<Double>        // [longitude, latitude]
 )
 
+@Serializable
 data class Property(
     val city: String,
     val cap: String,
@@ -57,16 +66,24 @@ data class Property(
     val location: GeoLocation = GeoLocation(coordinates = listOf(longitude, latitude))
 }
 
+@Serializable
 enum class EnergyClass(val label: String) {
+    @SerialName("A")
     A("A"),
+    @SerialName("B")
     B("B"),
+    @SerialName("C")
     C("C"),
+    @SerialName("D")
     D("D"),
+    @SerialName("E")
     E("E"),
+    @SerialName("F")
     F("F"),
+    @SerialName("G")
     G("G");
 
-    companion object {
-        fun fromLabel(label: String): EnergyClass? = values().find { it.label == label }
-    }
+//    companion object {
+//        fun fromLabel(label: String): EnergyClass? = values().find { it.label == label }
+//    }
 }
