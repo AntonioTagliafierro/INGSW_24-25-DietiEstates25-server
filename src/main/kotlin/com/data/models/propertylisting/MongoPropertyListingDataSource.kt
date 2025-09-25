@@ -1,5 +1,6 @@
 package com.data.models.propertylisting
 
+import com.data.models.image.MongoImageDataSource
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.geojson.Point
 import com.mongodb.client.model.geojson.Position
@@ -7,6 +8,7 @@ import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import com.service.GeoapifyService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import org.bson.Document
@@ -14,7 +16,8 @@ import sun.rmi.server.Dispatcher
 
 class MongoPropertyListingDataSource(
     private val collection: MongoCollection<PropertyListing>,
-    private val geoapifyService: GeoapifyService
+    private val geoapifyService: GeoapifyService,
+    private val imageDataSource: MongoImageDataSource
 ) : PropertyListingDataSource {
     override suspend fun insertListing(listing: PropertyListing): Boolean = withContext(Dispatchers.IO) {
 
@@ -31,7 +34,13 @@ class MongoPropertyListingDataSource(
 
     override suspend fun getAllListings(): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
-            collection.find().toList()
+            val listings = collection.find().toList()
+            listings.map { listing ->
+                val images = imageDataSource.getHouseImages(listing.id.toString())
+                listing.copy(
+                    property = listing.property.copy(images = images)
+                )
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -40,17 +49,31 @@ class MongoPropertyListingDataSource(
 //= withContext(Dispatchers.IO)
     override suspend fun getListingsByEmail(email: String): List<PropertyListing>  {
 
-        return try {
-
-            collection.find(Filters.eq("agentEmail", email)).toList()
-
-        } catch (e: Exception) {
-
-            e.printStackTrace()
-            emptyList()
+    return try {
+        val listings = collection.find(Filters.eq("agentEmail", email)).toList()
+        listings.map { listing ->
+            val images = imageDataSource.getHouseImages(listing.id.toString())
+            listing.copy(
+                property = listing.property.copy(images = images)
+            )
         }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        emptyList()
+    }
 
 
+    }
+
+    override suspend fun getListingsById(id: String): PropertyListing? = withContext(Dispatchers.IO) {
+        try {
+            val listing = collection.find(Filters.eq("id", id)).firstOrNull() ?: return@withContext null
+            val images = imageDataSource.getHouseImages(listing.id.toString())
+            listing.copy(property = listing.property.copy(images = images))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     override suspend fun getListingWithinRadius(
@@ -92,6 +115,7 @@ class MongoPropertyListingDataSource(
             emptyList()
         }
     }
+
 
 
 

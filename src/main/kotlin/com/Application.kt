@@ -97,7 +97,8 @@ fun Application.module() {
     // PropertyListing
     val propertyListingDataSource = MongoPropertyListingDataSource(
         collection = propertyListingCollection,
-        geoapifyService = geoapifyService
+        geoapifyService = geoapifyService,
+        imageDataSource = imageDataSource
     )
 
     // Appointments

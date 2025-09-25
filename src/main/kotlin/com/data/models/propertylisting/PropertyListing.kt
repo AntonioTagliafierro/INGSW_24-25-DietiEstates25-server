@@ -61,7 +61,8 @@ data class Property(
     val heatingSystem: Boolean,
     val description: String,
     val propertyPicture: String? = null,
-    val indicators: List<String> = emptyList()
+    val indicators: List<String> = emptyList(),
+    val images: List<String> = emptyList()
 ) {
     val location: GeoLocation = GeoLocation(coordinates = listOf(longitude, latitude))
 }

@@ -64,4 +64,22 @@ fun Route.imageRoutes(
         else
             call.respond(HttpStatusCode.InternalServerError, "Errore aggiornamento immagini.")
     }
+
+    get("/propertylisting/image/{ownerId}") {
+        val ownerId = call.parameters["ownerId"]
+
+        if (ownerId.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, "ownerId mancante")
+            return@get
+        }
+
+        val imageBase64 = imageDataSource.getUserProfileImage(ownerId)
+
+        if (imageBase64 == null) {
+            call.respond(HttpStatusCode.Conflict, "Nessuna immagine associata all'annuncio")
+        } else {
+            call.respondText(imageBase64, ContentType.Text.Plain)
+        }
+
+    }
 }

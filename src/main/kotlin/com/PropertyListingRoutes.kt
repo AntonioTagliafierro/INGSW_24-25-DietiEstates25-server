@@ -65,15 +65,21 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
 
 
+            //call.respond(HttpStatusCode.OK, response)
+        }
+
+        get("getpropertieslistingbyid") {
+            val id = call.receive<String>()
+            if (id.isNullOrBlank()) {
+                return@get call.respond(HttpStatusCode.BadRequest, "ListingID is required")
+            }
+
+            val listings = propertyListingDataSource.getListingsById(id)
 
 
+            //val response = listings.map { it.toResponse() }
 
-
-
-
-
-
-
+            call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
 
 
             //call.respond(HttpStatusCode.OK, response)
