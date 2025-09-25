@@ -74,7 +74,7 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
                 return@get call.respond(HttpStatusCode.BadRequest, "ListingID is required")
             }
 
-            val listings = propertyListingDataSource.getListingsById(id)
+            val listings = propertyListingDataSource.getListingById(id)
 
 
             //val response = listings.map { it.toResponse() }

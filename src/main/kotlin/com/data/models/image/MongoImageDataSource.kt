@@ -46,5 +46,16 @@ class MongoImageDataSource(
             .toList()
             .map { it.base64 }
     }
+
+    override suspend fun getHouseImagesByIds(houseIds: List<String>): Map<String, List<String>> {
+        if (houseIds.isEmpty()) return emptyMap()
+
+        val results = images.find(Filters.`in`("ownerId", houseIds)).toList()
+
+        return results.groupBy { it.ownerId }
+            .mapValues { entry -> entry.value.map { it.base64 } }
+    }
+
+
 }
 

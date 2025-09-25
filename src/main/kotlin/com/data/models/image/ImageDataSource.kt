@@ -10,4 +10,6 @@ interface ImageDataSource {
      suspend fun updatePpById(ownerIdentifier: String, base64Image: String): Boolean
 
      suspend fun deleteImages(userId: String): Boolean
+
+     suspend fun getHouseImagesByIds(houseIds: List<String>): Map<String, List<String>>
 }
