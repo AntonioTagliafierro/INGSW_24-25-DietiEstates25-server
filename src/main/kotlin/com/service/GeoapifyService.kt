@@ -24,7 +24,7 @@ class GeoapifyService(
     suspend fun getPOIs(
         lat: Double,
         lon: Double,
-        radius: Int = 3000
+        radius: Int = 1000
     ): List<POI> {
 
         val categories = mapOf(
