@@ -37,6 +37,8 @@ data class GeoLocation(
     val coordinates: List<Double>        // [longitude, latitude]
 )
 
+
+
 @Serializable
 data class Property(
     val city: String,
@@ -61,7 +63,7 @@ data class Property(
     val heatingSystem: Boolean,
     val description: String,
     val propertyPicture: String? = null,
-    val indicators: List<String> = emptyList(),
+    val pois: List<POI> = emptyList(),
     val images: List<String> = emptyList()
 ) {
     val location: GeoLocation = GeoLocation(coordinates = listOf(longitude, latitude))

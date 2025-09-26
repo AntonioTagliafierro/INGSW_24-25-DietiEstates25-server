@@ -12,6 +12,8 @@ data class PropertyListingResponse(
     val agentEmail: String
 )
 
+
+
 @Serializable
 data class PropertyResponse(
     val city: String,
@@ -36,7 +38,7 @@ data class PropertyResponse(
     val heatingSystem: Boolean,
     val description: String,
     val propertyPicture: String? = null,
-    val indicators: List<String> = emptyList()
+    val pois: List<POI> = emptyList(),
 )
 
 
@@ -75,6 +77,6 @@ fun Property.toResponse(): PropertyResponse {
         heatingSystem = this.heatingSystem,
         description = this.description,
         propertyPicture = this.propertyPicture,
-        indicators = this.indicators
+        pois = this.pois
     )
 }

@@ -19,12 +19,14 @@ class MongoPropertyListingDataSource(
     private val geoapifyService: GeoapifyService,
     private val imageDataSource: MongoImageDataSource
 ) : PropertyListingDataSource {
+
+
     override suspend fun insertListing(listing: PropertyListing): Boolean = withContext(Dispatchers.IO) {
 
         try {
-            val indicators = geoapifyService.getIndicators(listing.property.latitude, listing.property.longitude)
-            val listingWithIndicators = listing.copy(property = listing.property.copy(indicators = indicators))
-            collection.insertOne(listingWithIndicators)
+            val pois = geoapifyService.getPOIs(listing.property.latitude, listing.property.longitude)
+            val listingWithPois = listing.copy(property = listing.property.copy(pois = pois))
+            collection.insertOne(listingWithPois)
             true
         } catch (e: Exception) {
             e.printStackTrace()

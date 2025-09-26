@@ -13,6 +13,16 @@ class Mappers {
         )
     }
 
+    fun POI.toDomain(): POI {
+        return POI(
+            name = this.name,
+            type = this.type,
+            lat = this.lat,
+            lon = this.lon,
+            distance = this.distance
+        )
+    }
+
     fun PropertyRequest.toDomain(): Property {
         return Property(
             city = this.city,
@@ -52,6 +62,8 @@ class Mappers {
         )
     }
 
+
+
     fun Property.toResponse(): PropertyResponse {
         return PropertyResponse(
             city = this.city,
@@ -75,7 +87,9 @@ class Mappers {
             airConditioning = this.airConditioning,
             heatingSystem = this.heatingSystem,
             description = this.description,
-            propertyPicture = this.propertyPicture
+            propertyPicture = this.propertyPicture,
+            pois = this.pois.map { it.toResponse() }
         )
     }
+    fun POI.toResponse(): POI = this
 }

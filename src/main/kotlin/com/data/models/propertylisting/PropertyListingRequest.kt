@@ -12,6 +12,8 @@ data class PropertyListingRequest(
     val agentEmail: String
 )
 
+
+
 @Serializable
 data class PropertyRequest(
     val city: String,
@@ -81,7 +83,7 @@ fun PropertyRequest.toEntity(): Property {
         heatingSystem = this.heatingSystem,
         description = this.description,
         propertyPicture = this.propertyPicture,
-        indicators = emptyList() // lo riempirai con GeoapifyService
+
     )
 }
 
