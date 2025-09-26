@@ -34,55 +34,43 @@ class MongoPropertyListingDataSource(
         }
     }
 
+
+//    override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {
+//        val allIds = listings.map { it.id.toString() }
+//        val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
+//
+//        return listings.map { listing ->
+//            val images = imagesMap[listing.id.toString()] ?: emptyList()
+//            listing.copy(
+//                property = listing.property.copy(images = images)
+//            )
+//        }
+//    }
+
+    override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {
+        val allIds = listings.map { it.id.toString() }
+        val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
+
+        return listings.map { listing ->
+            val images = imagesMap[listing.id.toString()] ?: emptyList()
+            listing.copy(property = listing.property.copy(images = images))
+        }
+    }
+
     override suspend fun getAllListings(): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
             val listings = collection.find().toList()
-            listings.map { listing ->
-                val images = imageDataSource.getHouseImages(listing.id.toString())
-                listing.copy(
-                    property = listing.property.copy(images = images)
-                )
-            }
+            attachImagesToListings(listings)
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-    //= withContext(Dispatchers.IO)
-//    override suspend fun getListingsByEmail(email: String): List<PropertyListing>  {
-//
-//    return try {
-//        val listings = collection.find(Filters.eq("agentEmail", email)).toList()
-//        listings.map { listing ->
-//            val images = imageDataSource.getHouseImages(listing.id.toString())
-//            listing.copy(
-//                property = listing.property.copy(images = images)
-//            )
-//        }
-//    } catch (e: Exception) {
-//        e.printStackTrace()
-//        emptyList()
-//    }
-//
-//
-//    }
-//    funzione che prende annunci e immagini in un unica query per ridurre i tempi
     override suspend fun getListingsByEmail(email: String): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
             val listings = collection.find(Filters.eq("agentEmail", email)).toList()
-
-            // Recupera tutte le immagini in un’unica query
-            val allIds = listings.map { it.id.toString() }
-            val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
-
-            // Combina listings + immagini
-            listings.map { listing ->
-                val images = imagesMap[listing.id.toString()] ?: emptyList()
-                listing.copy(
-                    property = listing.property.copy(images = images)
-                )
-            }
+            attachImagesToListings(listings)
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()

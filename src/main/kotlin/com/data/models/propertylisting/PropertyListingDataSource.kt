@@ -7,5 +7,6 @@ interface PropertyListingDataSource {
     suspend fun getListingWithinRadius(lat: Double, lon: Double, radius: Int): List<PropertyListing>
     suspend fun getListingsByTypeAndCity(type: String, city: String): List<PropertyListing>
     suspend fun getListingById(id: String): PropertyListing?
+    suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing>
 
 }
