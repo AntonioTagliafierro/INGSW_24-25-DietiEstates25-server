@@ -28,13 +28,13 @@ class MongoActivityDataSource(
             emptyList()
         }
     }
+
     override suspend fun deleteActivities(userId: String): Boolean {
 
         val deleteUser = activities.deleteMany(Filters.eq("userId", userId))
 
         return deleteUser.deletedCount > 0
     }
-
 
     override fun textACCEPTED( userEmail : String ) : String{
         return "You Accepted a request by: $userEmail"
@@ -47,5 +47,6 @@ class MongoActivityDataSource(
     override fun textDECLINED( userEmail : String ) : String{
         return "You Declined a request of an agenct by: $userEmail"
     }
+
 
 }

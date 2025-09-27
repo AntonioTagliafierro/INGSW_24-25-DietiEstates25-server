@@ -71,6 +71,7 @@ fun Route.admin(
                         }
 
                         userDataSource.getAgencyUsers(userIds)
+
                     } catch (e: Exception) {
                         call.respond(
                             HttpStatusCode.InternalServerError,
@@ -162,15 +163,16 @@ fun Route.admin(
                 val result = mailerSendService.sendSuppAdminEmail(request.suppAdminEmail, user.getEmail(), password)
 
 
-                val resultActivity = activityDataSource.insertActivity(
-                    Activity(
-                        userId = admin.id.toString(),
-                        type = ActivityType.INSERT ,
-                        text = activityDataSource.textINSERT(user.getEmail())
-                    )
-                )
+                if (result.status == Accepted) {
 
-                if (result.status == Accepted && resultActivity) {
+                    activityDataSource.insertActivity(
+                        Activity(
+                            userId = admin.id.toString(),
+                            type = ActivityType.INSERT ,
+                            text = activityDataSource.textINSERT(user.getEmail())
+                        )
+                    )
+                    
                     call.respond(HttpStatusCode.OK, "Credenziali inviate all'email ${request.suppAdminEmail} con successo")
                 }else{
 
