@@ -9,8 +9,8 @@ data class Offer(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
     val propertyId: String,
-    val buyerId: String,
-    val agentId: String,
+    val buyerName: String,
+    val agentName: String,
     val messages: MutableList<OfferMessage> = mutableListOf()
 )
 

@@ -8,6 +8,7 @@ import com.data.models.agency.AgencyDataSource
 import com.data.models.user.Role
 import com.data.models.user.User
 import com.data.models.user.UserDataSource
+import com.data.models.user.myToLowerCase
 import com.data.requests.AdminRequest
 import com.data.requests.UserInfoRequest
 import com.data.responses.ListResponse
@@ -158,7 +159,7 @@ fun Route.admin(
                     return@post
                 }
 
-                val result = mailerSendService.sendSuppAdminEmail(request.suppAdminEmail, user.getEmail(), password)
+                val result = mailerSendService.sendSuppAdminEmail(request.suppAdminEmail, user.email.myToLowerCase(), password)
 
 
                 if (result.status == Accepted) {
@@ -167,7 +168,7 @@ fun Route.admin(
                         Activity(
                             userId = admin.id.toString(),
                             type = ActivityType.INSERT ,
-                            text = activityDataSource.textINSERT(user.getEmail())
+                            text = activityDataSource.textINSERT(user.email)
                         )
                     )
                     

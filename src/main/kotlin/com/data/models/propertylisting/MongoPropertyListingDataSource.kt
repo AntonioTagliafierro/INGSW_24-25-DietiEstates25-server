@@ -1,6 +1,7 @@
 package com.data.models.propertylisting
 
 import com.data.models.image.MongoImageDataSource
+import com.data.models.user.myToLowerCase
 import com.mongodb.client.model.Filters
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.service.GeoapifyService
@@ -65,7 +66,7 @@ class MongoPropertyListingDataSource(
 
     override suspend fun getListingsByEmail(email: String): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
-            val listings = collection.find(Filters.eq("agentEmail", email)).toList()
+            val listings = collection.find(Filters.eq("agentEmail", email.myToLowerCase())).toList()
             attachImagesToListings(listings)
         } catch (e: Exception) {
             e.printStackTrace()

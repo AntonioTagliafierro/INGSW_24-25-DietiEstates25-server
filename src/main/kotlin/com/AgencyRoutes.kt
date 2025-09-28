@@ -10,6 +10,7 @@ import com.data.models.image.ImageDataSource
 import com.data.models.user.Role
 import com.data.models.user.User
 import com.data.models.user.UserDataSource
+import com.data.models.user.myToLowerCase
 import com.data.requests.AuthRequest
 import com.data.requests.UserInfoRequest
 import com.data.responses.ListResponse
@@ -63,7 +64,7 @@ fun Route.agencyRequests(
             var wasAcknowledged = agencyDataSource.insertAgency(
                 Agency(
                     name = request.agencyName!!,
-                    agencyEmail = user!!.getEmail(),
+                    agencyEmail = user!!.email.myToLowerCase(),
                     pending = true
                 )
             )
@@ -111,7 +112,7 @@ fun Route.agencyRequests(
 
             if (request.typeRequest == "accepted") {
 
-                val roleUpdated = userDataSource.updateUserRole(user.getEmail(), Role.AGENT_ADMIN)
+                val roleUpdated = userDataSource.updateUserRole(user.email.myToLowerCase(), Role.AGENT_ADMIN)
                 if (!roleUpdated) {
                     call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update del ruolo")
                     return@post
@@ -127,14 +128,14 @@ fun Route.agencyRequests(
                     Activity(
                         userId = admin.id.toString(),
                         type = ActivityType.ACCEPTED,
-                        text = activityDataSource.textACCEPTED(user.getEmail())
+                        text = activityDataSource.textACCEPTED(user.email.myToLowerCase()),
                     )
                 )
 
                 call.respond(HttpStatusCode.OK, "Richiesta accettata con successo")
             } else {
 
-                val roleUpdated = userDataSource.deleteUser(user.getEmail())
+                val roleUpdated = userDataSource.deleteUser(user.email.myToLowerCase())
                 if (!roleUpdated) {
                     call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update del ruolo")
                     return@post
@@ -148,7 +149,7 @@ fun Route.agencyRequests(
 
                 imageDataSource.deleteImages(user.id.toString())
 
-                val agency = agencyDataSource.getAgencyByEmail(user.getEmail())
+                val agency = agencyDataSource.getAgencyByEmail(user.email.myToLowerCase())
                 if (agency != null) {
                     imageDataSource.deleteImages(agency.id.toString())
                 }
@@ -157,7 +158,7 @@ fun Route.agencyRequests(
                     Activity(
                         userId = admin.id.toString(),
                         type = ActivityType.DECLINED,
-                        text = activityDataSource.textACCEPTED(user.getEmail())
+                        text = activityDataSource.textACCEPTED(user.email.myToLowerCase())
                     )
                 )
 
@@ -274,5 +275,26 @@ fun Route.agencyRequests(
         }
 
 
+    }
+
+    get("/agents/name") {
+        val email = call.request.queryParameters["email"]
+
+        if (email.isNullOrBlank()) {
+            call.respond(HttpStatusCode.BadRequest, "Parametro 'email' mancante")
+            return@get
+        }
+
+        try {
+            val agentName = userDataSource.getUserByEmail(email)
+
+            if (agentName == null) {
+                call.respond(HttpStatusCode.NotFound, "Nessun agente trovato con email $email")
+            } else {
+                call.respond(HttpStatusCode.OK, agentName.username)
+            }
+        } catch (e: Exception) {
+            call.respond(HttpStatusCode.InternalServerError, "Errore: ${e.localizedMessage}")
+        }
     }
 }
