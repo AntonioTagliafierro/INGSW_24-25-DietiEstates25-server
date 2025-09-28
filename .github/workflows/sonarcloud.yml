@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PORT: 8080
-      JWT_ISSUER: "http://0.0.0.0:27017"
-      JWT_DOMAIN: "http://0.0.0.0:27017"
-      JWT_AUDIENCE: "users"
-      JWT_REALM: "ktor sample app"
-      MAILERSEND_TOKEN: ${{ secrets.MAILERSEND_TOKEN }}
-      MAILERSEND_BASE_URL: ${{ secrets.MAILERSEND_BASE_URL }}
-      MAILERSEND_TEMPLATE: ${{ secrets.MAILERSEND_TEMPLATE }}
+      JWT_ISSUER: ${{ secrets.JWT_ISSUER || 'http://0.0.0.0:27017' }}
+      JWT_DOMAIN: ${{ secrets.JWT_DOMAIN || 'http://0.0.0.0:27017' }}
+      JWT_AUDIENCE: ${{ secrets.JWT_AUDIENCE || 'users' }}
+      JWT_REALM: ${{ secrets.JWT_REALM || 'ktor sample app' }}
+      MAILERSEND_TOKEN: ${{ secrets.MAILERSEND_TOKEN || 'dummy-token' }}
+      MAILERSEND_BASE_URL: ${{ secrets.MAILERSEND_BASE_URL || 'https://api.mailersend.com' }}
+      MAILERSEND_TEMPLATE: ${{ secrets.MAILERSEND_TEMPLATE || 'dummy-template-id' }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
@@ -49,6 +49,7 @@ jobs:
         run: ./gradlew clean build --stacktrace
 
       - name: Run SonarCloud Analysis
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         run: ./gradlew sonar \
           -Dsonar.projectKey=DietiEstates25_backend \
           -Dsonar.host.url=https://sonarcloud.io \
