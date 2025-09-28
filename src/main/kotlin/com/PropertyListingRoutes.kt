@@ -1,13 +1,13 @@
 package com
 
 import com.data.models.propertylisting.PropertyListingDataSource
-import com.data.models.propertylisting.PropertyListingRequest
-import com.data.models.propertylisting.toEntity
-import com.data.models.propertylisting.toResponse
+import com.data.requests.PropertyListingRequest
 
 import com.data.requests.PropertySearchRequest
+import com.data.requests.toEntity
 
 import com.data.responses.ListResponse
+import com.data.responses.toResponse
 import com.mongodb.client.model.Filters
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
@@ -116,48 +116,68 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val response = listings.map { it.toResponse() }
             call.respond(HttpStatusCode.OK, response)
         }
-//
-//        post("/searchWithFilters") {
-//            val request = call.receive<PropertySearchRequest>()
-//
-//            val filters = mutableListOf<Bson>()
-//
-//            // 🔹 filtri obbligatori
-//            filters += Filters.eq("type", request.type)
-//            filters += Filters.eq("property.city", request.city)
-//
-//
-//            request.minPrice?.let {
-//                filters += Filters.gte("price", it)
-//            }
-//            request.maxPrice?.let {
-//                filters += Filters.lte("price", it)
-//            }
-//
-//            request.minRooms?.let {
-//                if (it > 0) {
-//                    filters += Filters.gte("property.numberOfRooms", it) // ✅ maggiore o uguale
-//                }
-//            }
-//
-//            request.energyClass?.let { filters += Filters.eq("property.energyClass", it) }
-//
-//            if (request.elevator == true) filters += Filters.eq<Boolean>("property.elevator", true)
-//            if (request.gatehouse == true) filters += Filters.eq<Boolean>("property.gatehouse", true)
-//            if (request.balcony == true) filters += Filters.eq<Boolean>("property.balcony", true)
-//            if (request.roof == true) filters += Filters.eq<Boolean>("property.roof", true)
-//
-//            val query = if (filters.isEmpty()) Filters.empty() else Filters.and(filters)
-//
-//            val listings = propertyListingDataSource.searchWithFilters(query)
-//
-//            if (listings.isEmpty()) {
-//                call.respond(HttpStatusCode.NotFound, "Nessuna proprietà trovata")
-//            } else {
-//                val response = listings.map { it.toResponse() }
-//                call.respond(HttpStatusCode.OK, response)
-//            }
-//        }
+
+    get("/search") {
+        val type = call.request.queryParameters["type"]
+        val city = call.request.queryParameters["city"]
+
+        println(" Ricevuta chiamata GET /search con type=$type, city=$city")
+
+        if (type.isNullOrBlank() || city.isNullOrBlank()) {
+            println(" Parametri mancanti")
+            return@get call.respond(HttpStatusCode.BadRequest, "Missing type or city parameter")
+        }
+
+        try {
+            val listings = propertyListingDataSource.getListingsByTypeAndCity(type, city)
+            println(" Recuperati ${listings.size} risultati dal DB")
+
+            val response = listings.map { it.toResponse() }
+            call.respond(HttpStatusCode.OK, response)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            call.respond(HttpStatusCode.InternalServerError, "Errore lato server: ${e.message}")
+        }
+    }
+
+
+    post("/searchWithFilters") {
+        val request = call.receive<PropertySearchRequest>()
+
+        val filters = mutableListOf<Bson>()
+
+
+        filters += Filters.eq("type", request.type)
+        filters += Filters.eq("property.city", request.city)
+
+
+        request.minPrice?.let { filters += Filters.gte("price", it.toInt()) }
+        request.maxPrice?.let { filters += Filters.lte("price", it.toInt()) }
+
+        request.rooms?.let {
+            if (it > 0) {
+                filters += Filters.gte("property.numberOfRooms", it)
+            }
+        }
+
+        request.energyClass?.let { filters += Filters.eq("property.energyClass", it) }
+
+        if (request.elevator == true) filters += Filters.eq<Boolean>("property.elevator", true)
+        if (request.gatehouse == true) filters += Filters.eq<Boolean>("property.gatehouse", true)
+        if (request.balcony == true) filters += Filters.eq<Boolean>("property.balcony", true)
+        if (request.roof == true) filters += Filters.eq<Boolean>("property.roof", true)
+
+        val query = if (filters.isEmpty()) Filters.empty() else Filters.and(filters)
+
+        val listings = propertyListingDataSource.searchWithFilters(query)
+
+        if (listings.isEmpty()) {
+            call.respond(HttpStatusCode.NotFound, "Nessuna proprietà trovata")
+        } else {
+            val response = listings.map { it.toResponse() }
+            call.respond(HttpStatusCode.OK, response)
+        }
+    }
 
 
     }

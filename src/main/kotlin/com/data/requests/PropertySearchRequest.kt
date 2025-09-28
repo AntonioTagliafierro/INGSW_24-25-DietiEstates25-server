@@ -1,18 +1,17 @@
 package com.data.requests
+
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class  PropertySearchRequest (
-
-    val type: String? = null,
-    val city: String? = null,
+data class PropertySearchRequest(
+    val type: String,
+    val city: String,
     val minPrice: Float? = null,
     val maxPrice: Float? = null,
-    val elevator: Boolean? = null,
-    val gatehouse: Boolean? = null,
-    val balcony: Boolean? = null,
-    val roof: Boolean? = null,
-    val minRooms: Int? = null,
-    val energyClass: String? = null
-
+    val rooms: Int? = null,
+    val energyClass: String? = null,
+    val elevator: Boolean = false,
+    val gatehouse: Boolean = false,
+    val balcony: Boolean = false,
+    val roof: Boolean = false
 )

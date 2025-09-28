@@ -1,6 +1,10 @@
-package com.data.models.propertylisting
+package com.data.responses
 
+import com.data.models.propertylisting.POI
+import com.data.models.propertylisting.Property
+import com.data.models.propertylisting.PropertyListing
 import kotlinx.serialization.Serializable
+import com.data.models.user.User
 
 @Serializable
 data class PropertyListingResponse(
@@ -9,7 +13,7 @@ data class PropertyListingResponse(
     val type: String,
     val price: Float,
     val property: PropertyResponse,
-    val agentEmail: String
+    val agent: User? = null
 )
 
 
@@ -49,7 +53,7 @@ fun PropertyListing.toResponse(): PropertyListingResponse {
         type = this.type!!.label,
         price = this.price,
         property = this.property.toResponse(),
-        agentEmail = this.agentEmail
+        agent = this.agent
     )
 }
 

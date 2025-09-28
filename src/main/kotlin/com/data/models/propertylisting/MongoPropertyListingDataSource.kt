@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import org.bson.Document
+import org.bson.conversions.Bson
 
 class MongoPropertyListingDataSource(
     private val collection: MongoCollection<PropertyListing>,
@@ -103,17 +104,32 @@ class MongoPropertyListingDataSource(
     override suspend fun getListingsByTypeAndCity(type: String, city: String): List<PropertyListing> =
         withContext(Dispatchers.IO) {
             try {
-                collection.find(
+                println("Query con type=$type, city=$city")
+                val listings = collection.find(
                     Filters.and(
                         Filters.eq("type", type),
-                        Filters.eq("city", city)
+                        Filters.eq("property.city", city) // 👈 campo annidato
                     )
                 ).toList()
+
+                println(" Trovati ${listings.size} documenti in MongoDB")
+                attachImagesToListings(listings)
             } catch (e: Exception) {
                 e.printStackTrace()
                 emptyList()
             }
         }
+
+    override suspend fun searchWithFilters(query: Bson): List<PropertyListing> = withContext(Dispatchers.IO) {
+        try {
+            collection.find(query).toList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+
 
 
 }
