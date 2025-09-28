@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PORT: 8080
+      JWT_ISSUER: "http://0.0.0.0:27017"
+      JWT_DOMAIN: "http://0.0.0.0:27017"
+      JWT_AUDIENCE: "users"
+      JWT_REALM: "ktor sample app"
       MAILERSEND_TOKEN: ${{ secrets.MAILERSEND_TOKEN }}
       MAILERSEND_BASE_URL: ${{ secrets.MAILERSEND_BASE_URL }}
       MAILERSEND_TEMPLATE: ${{ secrets.MAILERSEND_TEMPLATE }}
