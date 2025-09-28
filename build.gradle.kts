@@ -8,7 +8,18 @@ plugins {
     kotlin("jvm") version "2.1.0"
     id("io.ktor.plugin") version "3.0.2"
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
+    id("org.sonarqube") version "6.3.1.5724"
 }
+
+sonarqube {
+    properties {
+        property("sonar.projectKey", "DietiEstates25_backend")
+        property("sonar.host.url", "http://localhost:9000")
+        property("sonar.sources", "src/main")
+        //        property "sonar.tests", "src/test"   per analizzare le JUnit del server
+    }
+}
+
 
 group = "com"
 version = "0.0.1"
@@ -69,5 +80,8 @@ dependencies {
     // Test
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+
+   
+
 }
 

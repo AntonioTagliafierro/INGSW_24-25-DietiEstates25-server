@@ -1,6 +1,5 @@
 package com.data.models.activity
 
-import com.data.models.user.User
 
 interface ActivityDataSource {
 

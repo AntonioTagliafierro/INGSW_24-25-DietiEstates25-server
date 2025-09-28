@@ -1,6 +1,5 @@
 package com.data.models.appointment
 
-import com.data.models.offer.OfferMessage
 import com.security.serializer.ObjectIdSerializer
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId

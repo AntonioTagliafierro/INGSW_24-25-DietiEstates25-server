@@ -3,9 +3,10 @@ package com.data.models.propertylisting
 
 import com.security.serializer.ObjectIdSerializer
 import kotlinx.serialization.SerialName
-import org.bson.codecs.pojo.annotations.BsonId
 import org.bson.types.ObjectId
 import kotlinx.serialization.Serializable
+import com.data.models.user.User
+
 
 @Serializable
 data class PropertyListing(
@@ -15,7 +16,7 @@ data class PropertyListing(
     val type: Type?,
     val price: Float,
     val property: Property,
-    val agentEmail: String
+    val agent: User
 )
 
 @Serializable

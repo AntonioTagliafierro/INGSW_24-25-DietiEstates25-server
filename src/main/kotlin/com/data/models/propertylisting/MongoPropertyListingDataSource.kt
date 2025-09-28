@@ -2,17 +2,13 @@ package com.data.models.propertylisting
 
 import com.data.models.image.MongoImageDataSource
 import com.mongodb.client.model.Filters
-import com.mongodb.client.model.geojson.Point
-import com.mongodb.client.model.geojson.Position
 import com.mongodb.kotlin.client.coroutine.MongoCollection
-import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import com.service.GeoapifyService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import org.bson.Document
-import sun.rmi.server.Dispatcher
 
 class MongoPropertyListingDataSource(
     private val collection: MongoCollection<PropertyListing>,

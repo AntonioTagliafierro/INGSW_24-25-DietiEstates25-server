@@ -2,6 +2,7 @@ package com.data.models.propertylisting
 
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
+import com.data.models.user.User
 
 @Serializable
 data class PropertyListingRequest(
@@ -9,7 +10,7 @@ data class PropertyListingRequest(
     val type: String, // "Rent" o "Sell"
     val price: Float,
     val property: PropertyRequest,
-    val agentEmail: String
+    val agent: User
 )
 
 
@@ -55,7 +56,7 @@ fun PropertyListingRequest.toEntity(): PropertyListing {
         type = this.type.toType(),
         price = this.price,
         property = this.property.toEntity(),
-        agentEmail = this.agentEmail
+        agent = this.agent
     )
 }
 

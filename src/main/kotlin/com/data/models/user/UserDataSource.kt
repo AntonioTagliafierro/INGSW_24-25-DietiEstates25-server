@@ -1,8 +1,6 @@
 package com.data.models.user
 
-import com.data.models.agency.Agency
 import com.data.models.image.ImageDataSource
-import com.data.requests.AuthRequest
 import com.security.hashing.HashingService
 
 interface UserDataSource {

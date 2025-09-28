@@ -1,8 +1,6 @@
 package com.data.models.user
 
 import com.data.models.image.ImageDataSource
-import com.data.models.user.*
-import com.data.requests.AuthRequest
 
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates

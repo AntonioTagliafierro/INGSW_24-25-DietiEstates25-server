@@ -1,6 +1,5 @@
 package com.data.models.agency
 
-import com.data.models.user.User
 
 
 interface AgencyDataSource {

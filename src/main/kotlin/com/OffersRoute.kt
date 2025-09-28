@@ -1,14 +1,10 @@
 package com
 
-import com.data.models.activity.ActivityDataSource
 import com.data.models.offer.Offer
 import com.data.models.offer.OfferDataSource
 import com.data.models.offer.OfferMessage
-import com.data.models.user.UserDataSource
-import com.data.requests.AuthRequest
 import com.data.requests.MessageRequest
 import com.data.requests.OfferRequest
-import com.security.hashing.HashingService
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -44,6 +40,7 @@ fun Route.offerRouting(
                 call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'offerta")
                 return@post
             }
+
 
             call.respond(HttpStatusCode.OK, offer)
         }

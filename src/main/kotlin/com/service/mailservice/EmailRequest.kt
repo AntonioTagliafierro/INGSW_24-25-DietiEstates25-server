@@ -2,7 +2,6 @@ package com.service.mailservice
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.service.GeneratePassword
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class EmailRequest(
     val from: Recipient,

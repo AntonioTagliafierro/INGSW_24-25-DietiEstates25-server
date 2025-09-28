@@ -9,7 +9,7 @@ class Mappers {
             type = Type.valueOf(this.type), // enum dal valore stringa
             price = this.price,
             property = this.property.toDomain(),
-            agentEmail = this.agentEmail
+            agent = this.agent
         )
     }
 
@@ -58,7 +58,7 @@ class Mappers {
             type = this.type!!.name,
             price = this.price,
             property = this.property.toResponse(),
-            agentEmail = this.agentEmail
+            agent = this.agent
         )
     }
 

@@ -1,7 +1,6 @@
 package com.data.models.image
 
-import org.intellij.lang.annotations.Identifier
-import java.io.InputStream
+
 
 interface ImageDataSource {
      suspend fun getHouseImages(houseId: String): List<String>

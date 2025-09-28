@@ -12,7 +12,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 
 fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSource) {
     route("/propertylisting") {
