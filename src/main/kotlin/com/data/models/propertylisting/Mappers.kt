@@ -1,5 +1,10 @@
 package com.data.models.propertylisting
 
+import com.data.requests.PropertyListingRequest
+import com.data.requests.PropertyRequest
+import com.data.responses.PropertyListingResponse
+import com.data.responses.PropertyResponse
+
 class Mappers {
 
     // Request → Domain

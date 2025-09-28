@@ -1,22 +1,25 @@
-package com.data.models.propertylisting
+package com.data.responses
 
+import com.data.models.propertylisting.POI
+import com.data.models.propertylisting.Property
+import com.data.models.propertylisting.PropertyListing
 import kotlinx.serialization.Serializable
-import org.bson.types.ObjectId
 import com.data.models.user.User
 
 @Serializable
-data class PropertyListingRequest(
+data class PropertyListingResponse(
+    val id: String?,
     val title: String,
-    val type: String, // "Rent" o "Sell"
+    val type: String,
     val price: Float,
-    val property: PropertyRequest,
+    val property: PropertyResponse,
     val agent: User
 )
 
 
 
 @Serializable
-data class PropertyRequest(
+data class PropertyResponse(
     val city: String,
     val cap: String,
     val country: String,
@@ -38,30 +41,24 @@ data class PropertyRequest(
     val airConditioning: Boolean,
     val heatingSystem: Boolean,
     val description: String,
-    val propertyPicture: String? = null
+    val propertyPicture: String? = null,
+    val pois: List<POI> = emptyList(),
 )
 
-fun String.toType(): Type =
-    Type.values().find { it.label.equals(this, ignoreCase = true) }
-        ?: throw IllegalArgumentException("Unknown Type: $this")
 
-fun String.toEnergyClass(): EnergyClass =
-    EnergyClass.values().find { it.label.equals(this, ignoreCase = true) }
-        ?: throw IllegalArgumentException("Unknown EnergyClass: $this")
-
-fun PropertyListingRequest.toEntity(): PropertyListing {
-    return PropertyListing(
-        id = ObjectId(), // MongoDB assegna un nuovo ObjectId
+fun PropertyListing.toResponse(): PropertyListingResponse {
+    return PropertyListingResponse(
+        id = this.id.toHexString(),
         title = this.title,
-        type = this.type.toType(),
+        type = this.type!!.label,
         price = this.price,
-        property = this.property.toEntity(),
+        property = this.property.toResponse(),
         agent = this.agent
     )
 }
 
-fun PropertyRequest.toEntity(): Property {
-    return Property(
+fun Property.toResponse(): PropertyResponse {
+    return PropertyResponse(
         city = this.city,
         cap = this.cap,
         country = this.country,
@@ -73,7 +70,7 @@ fun PropertyRequest.toEntity(): Property {
         size = this.size,
         numberOfRooms = this.numberOfRooms,
         numberOfBathrooms = this.numberOfBathrooms,
-        energyClass = this.energyClass.toEnergyClass(),
+        energyClass = this.energyClass!!.label,
         parking = this.parking,
         garden = this.garden,
         elevator = this.elevator,
@@ -84,7 +81,6 @@ fun PropertyRequest.toEntity(): Property {
         heatingSystem = this.heatingSystem,
         description = this.description,
         propertyPicture = this.propertyPicture,
-
+        pois = this.pois
     )
 }
-

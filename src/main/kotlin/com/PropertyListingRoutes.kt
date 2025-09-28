@@ -1,9 +1,9 @@
 package com
 
 import com.data.models.propertylisting.PropertyListingDataSource
-import com.data.models.propertylisting.PropertyListingRequest
-import com.data.models.propertylisting.toEntity
-import com.data.models.propertylisting.toResponse
+import com.data.requests.PropertyListingRequest
+import com.data.requests.toEntity
+import com.data.responses.toResponse
 import com.data.responses.ListResponse
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive

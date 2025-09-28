@@ -1,22 +1,22 @@
-package com.data.models.propertylisting
+package com.data.requests
 
 import kotlinx.serialization.Serializable
+import org.bson.types.ObjectId
 import com.data.models.user.User
 
 @Serializable
-data class PropertyListingResponse(
-    val id: String?,
+data class PropertyListingRequest(
     val title: String,
-    val type: String,
+    val type: String, // "Rent" o "Sell"
     val price: Float,
-    val property: PropertyResponse,
+    val property: PropertyRequest,
     val agent: User
 )
 
 
 
 @Serializable
-data class PropertyResponse(
+data class PropertyRequest(
     val city: String,
     val cap: String,
     val country: String,
@@ -38,24 +38,30 @@ data class PropertyResponse(
     val airConditioning: Boolean,
     val heatingSystem: Boolean,
     val description: String,
-    val propertyPicture: String? = null,
-    val pois: List<POI> = emptyList(),
+    val propertyPicture: String? = null
 )
 
+fun String.toType(): com.data.models.propertylisting.Type =
+    _root_ide_package_.com.data.models.propertylisting.Type.values().find { it.label.equals(this, ignoreCase = true) }
+        ?: throw IllegalArgumentException("Unknown Type: $this")
 
-fun PropertyListing.toResponse(): PropertyListingResponse {
-    return PropertyListingResponse(
-        id = this.id.toHexString(),
+fun String.toEnergyClass(): com.data.models.propertylisting.EnergyClass =
+    _root_ide_package_.com.data.models.propertylisting.EnergyClass.values().find { it.label.equals(this, ignoreCase = true) }
+        ?: throw IllegalArgumentException("Unknown EnergyClass: $this")
+
+fun PropertyListingRequest.toEntity(): com.data.models.propertylisting.PropertyListing {
+    return _root_ide_package_.com.data.models.propertylisting.PropertyListing(
+        id = ObjectId(), // MongoDB assegna un nuovo ObjectId
         title = this.title,
-        type = this.type!!.label,
+        type = this.type.toType(),
         price = this.price,
-        property = this.property.toResponse(),
+        property = this.property.toEntity(),
         agent = this.agent
     )
 }
 
-fun Property.toResponse(): PropertyResponse {
-    return PropertyResponse(
+fun PropertyRequest.toEntity(): com.data.models.propertylisting.Property {
+    return _root_ide_package_.com.data.models.propertylisting.Property(
         city = this.city,
         cap = this.cap,
         country = this.country,
@@ -67,7 +73,7 @@ fun Property.toResponse(): PropertyResponse {
         size = this.size,
         numberOfRooms = this.numberOfRooms,
         numberOfBathrooms = this.numberOfBathrooms,
-        energyClass = this.energyClass!!.label,
+        energyClass = this.energyClass.toEnergyClass(),
         parking = this.parking,
         garden = this.garden,
         elevator = this.elevator,
@@ -78,6 +84,7 @@ fun Property.toResponse(): PropertyResponse {
         heatingSystem = this.heatingSystem,
         description = this.description,
         propertyPicture = this.propertyPicture,
-        pois = this.pois
-    )
+
+        )
 }
+
