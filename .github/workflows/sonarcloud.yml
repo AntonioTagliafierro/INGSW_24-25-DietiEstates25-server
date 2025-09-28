@@ -1,3 +1,13 @@
+name: SonarCloud analysis
+
+# <- qui definisci quando far partire il workflow
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
 jobs:
   Analysis:
     runs-on: ubuntu-latest
