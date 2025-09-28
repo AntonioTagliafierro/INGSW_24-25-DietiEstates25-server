@@ -4,7 +4,9 @@ import com.data.models.propertylisting.PropertyListingDataSource
 import com.data.models.propertylisting.PropertyListingRequest
 import com.data.models.propertylisting.toEntity
 import com.data.models.propertylisting.toResponse
+
 import com.data.requests.PropertySearchRequest
+
 import com.data.responses.ListResponse
 import com.mongodb.client.model.Filters
 import io.ktor.http.HttpStatusCode
@@ -14,7 +16,6 @@ import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import org.bson.conversions.Bson
 
 fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSource) {
@@ -41,7 +42,11 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
                 call.respond(HttpStatusCode.InternalServerError, "Error adding property listing")
             }
 
-
+//            if (success) {
+//                call.respond(HttpStatusCode.OK, data = entity.id.toString())
+//            } else {
+//                call.respond(HttpStatusCode.InternalServerError, "Error adding property listing")
+//            }
         }
 
         get("getallpropertieslisting") {
@@ -59,8 +64,12 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val listings = propertyListingDataSource.getListingsByEmail(email)
 
 
+            //val response = listings.map { it.toResponse() }
+
             call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
 
+
+            //call.respond(HttpStatusCode.OK, response)
         }
 
         get("getpropertieslistingbyid") {
@@ -72,8 +81,12 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val listings = propertyListingDataSource.getListingById(id)
 
 
+            //val response = listings.map { it.toResponse() }
+
             call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
 
+
+            //call.respond(HttpStatusCode.OK, response)
         }
 
         get("getpropertieslistingwithinradius") {
@@ -88,6 +101,7 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val listings = propertyListingDataSource.getListingWithinRadius(lat, lon, radius)
             val response = listings.map { it.toResponse() }
             call.respond(HttpStatusCode.OK, response)
+        }
 
         }
         get("/search") {
@@ -102,49 +116,48 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val response = listings.map { it.toResponse() }
             call.respond(HttpStatusCode.OK, response)
         }
-
-        post("/searchWithFilters") {
-            val request = call.receive<PropertySearchRequest>()
-
-            val filters = mutableListOf<Bson>()
-
-            // 🔹 filtri obbligatori
-            filters += Filters.eq("type", request.type)
-            filters += Filters.eq("property.city", request.city)
-
-
-            request.minPrice?.let {
-                filters += Filters.gte("price", it)
-            }
-            request.maxPrice?.let {
-                filters += Filters.lte("price", it)
-            }
-
-            request.minRooms?.let {
-                if (it > 0) {
-                    filters += Filters.gte("property.numberOfRooms", it) // ✅ maggiore o uguale
-                }
-            }
-
-            request.energyClass?.let { filters += Filters.eq("property.energyClass", it) }
-
-            if (request.elevator == true) filters += Filters.eq<Boolean>("property.elevator", true)
-            if (request.gatehouse == true) filters += Filters.eq<Boolean>("property.gatehouse", true)
-            if (request.balcony == true) filters += Filters.eq<Boolean>("property.balcony", true)
-            if (request.roof == true) filters += Filters.eq<Boolean>("property.roof", true)
-
-            val query = if (filters.isEmpty()) Filters.empty() else Filters.and(filters)
-
-            val listings = propertyListingDataSource.searchWithFilters(query)
-
-            if (listings.isEmpty()) {
-                call.respond(HttpStatusCode.NotFound, "Nessuna proprietà trovata")
-            } else {
-                val response = listings.map { it.toResponse() }
-                call.respond(HttpStatusCode.OK, response)
-            }
-        }
+//
+//        post("/searchWithFilters") {
+//            val request = call.receive<PropertySearchRequest>()
+//
+//            val filters = mutableListOf<Bson>()
+//
+//            // 🔹 filtri obbligatori
+//            filters += Filters.eq("type", request.type)
+//            filters += Filters.eq("property.city", request.city)
+//
+//
+//            request.minPrice?.let {
+//                filters += Filters.gte("price", it)
+//            }
+//            request.maxPrice?.let {
+//                filters += Filters.lte("price", it)
+//            }
+//
+//            request.minRooms?.let {
+//                if (it > 0) {
+//                    filters += Filters.gte("property.numberOfRooms", it) // ✅ maggiore o uguale
+//                }
+//            }
+//
+//            request.energyClass?.let { filters += Filters.eq("property.energyClass", it) }
+//
+//            if (request.elevator == true) filters += Filters.eq<Boolean>("property.elevator", true)
+//            if (request.gatehouse == true) filters += Filters.eq<Boolean>("property.gatehouse", true)
+//            if (request.balcony == true) filters += Filters.eq<Boolean>("property.balcony", true)
+//            if (request.roof == true) filters += Filters.eq<Boolean>("property.roof", true)
+//
+//            val query = if (filters.isEmpty()) Filters.empty() else Filters.and(filters)
+//
+//            val listings = propertyListingDataSource.searchWithFilters(query)
+//
+//            if (listings.isEmpty()) {
+//                call.respond(HttpStatusCode.NotFound, "Nessuna proprietà trovata")
+//            } else {
+//                val response = listings.map { it.toResponse() }
+//                call.respond(HttpStatusCode.OK, response)
+//            }
+//        }
 
 
     }
-}

@@ -1,7 +1,5 @@
 package com.data.models.propertylisting
 
-import org.bson.conversions.Bson
-
 interface PropertyListingDataSource {
     suspend fun insertListing(listing: PropertyListing): Boolean
     suspend fun getAllListings(): List<PropertyListing>
@@ -10,5 +8,5 @@ interface PropertyListingDataSource {
     suspend fun getListingsByTypeAndCity(type: String, city: String): List<PropertyListing>
     suspend fun getListingById(id: String): PropertyListing?
     suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing>
-    suspend fun searchWithFilters(query: Bson): List<PropertyListing>
+
 }

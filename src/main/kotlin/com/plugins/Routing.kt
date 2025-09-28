@@ -3,9 +3,7 @@ package com.plugins
 import com.*
 import com.data.models.activity.ActivityDataSource
 import com.data.models.agency.AgencyDataSource
-import com.data.models.appointment.AppointmentDataSource
 import com.data.models.image.ImageDataSource
-import com.data.models.notification.NotificationDataSource
 import com.data.models.propertylisting.PropertyListingDataSource
 import com.data.models.user.UserDataSource
 import com.security.hashing.HashingService
