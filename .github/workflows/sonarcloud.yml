@@ -1,4 +1,4 @@
-name: Build, Test and SonarCloud Scan
+name: Build, Test & SonarCloud Scan
 
 on:
   push:
@@ -9,13 +9,13 @@ on:
 
 jobs:
   build:
-    name: Build, Test and SonarCloud Analysis
+    name: Build, Test & SonarCloud
     runs-on: ubuntu-latest
     env:
+      PORT: 8080
       MAILERSEND_TOKEN: ${{ secrets.MAILERSEND_TOKEN }}
       MAILERSEND_BASE_URL: ${{ secrets.MAILERSEND_BASE_URL }}
       MAILERSEND_TEMPLATE: ${{ secrets.MAILERSEND_TEMPLATE }}
-      PORT: 8080
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
@@ -42,10 +42,10 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and test
-        run: ./gradlew clean build
+        run: ./gradlew clean build --stacktrace
 
       - name: Run SonarCloud Analysis
         run: ./gradlew sonar \
-          -Dsonar.host.url=https://sonarcloud.io \
           -Dsonar.projectKey=DietiEstates25_backend \
-          -Dsonar.login=$SONAR_TOKEN
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.token=$SONAR_TOKEN
