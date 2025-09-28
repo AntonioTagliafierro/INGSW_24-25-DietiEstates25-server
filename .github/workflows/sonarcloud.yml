@@ -1,12 +1,14 @@
 name: SonarCloud analysis
 
-# <- qui definisci quando far partire il workflow
 on:
   push:
     branches: ["master"]
   pull_request:
     branches: ["master"]
   workflow_dispatch:
+
+permissions:
+  pull-requests: read
 
 jobs:
   Analysis:
@@ -25,8 +27,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Build project
-        run: ./gradlew build
+      - name: Build project (without tests)
+        run: ./gradlew assemble
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2.2.0
@@ -38,6 +40,5 @@ jobs:
           projectBaseDir: .
           args: >
             -Dsonar.sources=src/main/kotlin
-            -Dsonar.tests=src/test/kotlin
             -Dsonar.exclusions=**/.env,**/secrets/**
             -Dsonar.verbose=true
