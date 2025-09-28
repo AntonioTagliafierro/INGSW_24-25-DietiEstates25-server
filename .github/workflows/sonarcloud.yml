@@ -35,10 +35,10 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          projectKey: AntonioTagliafierro_INGSW_24-25-DietiEstates25-server
-          organization: antoniotagliafierro
           projectBaseDir: .
           args: >
+            -Dsonar.projectKey=AntonioTagliafierro_INGSW_24-25-DietiEstates25-server
+            -Dsonar.organization=antoniotagliafierro
             -Dsonar.sources=src/main/kotlin
             -Dsonar.exclusions=**/.env,**/secrets/**
             -Dsonar.verbose=true
