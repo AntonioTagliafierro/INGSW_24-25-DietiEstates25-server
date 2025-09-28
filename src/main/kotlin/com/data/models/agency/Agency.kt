@@ -10,5 +10,5 @@ open class Agency(
     val id: ObjectId = ObjectId.get(),
     var name: String,
     var pending : Boolean,
-    var agencyEmail: String
+    val agencyEmail: String
 )

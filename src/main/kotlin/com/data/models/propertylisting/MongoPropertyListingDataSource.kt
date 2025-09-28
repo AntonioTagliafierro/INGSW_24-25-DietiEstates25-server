@@ -3,13 +3,18 @@ package com.data.models.propertylisting
 import com.data.models.image.MongoImageDataSource
 import com.data.models.user.myToLowerCase
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.geojson.Point
+import com.mongodb.client.model.geojson.Position
 import com.mongodb.kotlin.client.coroutine.MongoCollection
+import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import com.service.GeoapifyService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import org.bson.Document
+import org.bson.conversions.Bson
+import sun.rmi.server.Dispatcher
 
 class MongoPropertyListingDataSource(
     private val collection: MongoCollection<PropertyListing>,
@@ -55,7 +60,7 @@ class MongoPropertyListingDataSource(
 
     override suspend fun getListingsByEmail(email: String): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
-            val listings = collection.find(Filters.eq("agent.email", email.myToLowerCase())).toList()
+            val listings = collection.find(Filters.eq("agentEmail", email)).toList()
             attachImagesToListings(listings)
         } catch (e: Exception) {
             e.printStackTrace()
@@ -103,17 +108,28 @@ class MongoPropertyListingDataSource(
     override suspend fun getListingsByTypeAndCity(type: String, city: String): List<PropertyListing> =
         withContext(Dispatchers.IO) {
             try {
-                collection.find(
+                val listings =  collection.find(
                     Filters.and(
                         Filters.eq("type", type),
-                        Filters.eq("city", city)
+                        Filters.eq("property.city", city)
                     )
                 ).toList()
+
+                attachImagesToListings(listings)
             } catch (e: Exception) {
                 e.printStackTrace()
                 emptyList()
             }
         }
+
+    override suspend fun searchWithFilters(query: Bson): List<PropertyListing> = withContext(Dispatchers.IO) {
+        try {
+            collection.find(query).toList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
 
 
 }

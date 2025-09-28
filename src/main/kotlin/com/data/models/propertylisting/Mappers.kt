@@ -1,10 +1,5 @@
 package com.data.models.propertylisting
 
-import com.data.requests.PropertyListingRequest
-import com.data.requests.PropertyRequest
-import com.data.responses.PropertyListingResponse
-import com.data.responses.PropertyResponse
-
 class Mappers {
 
     // Request → Domain
@@ -14,7 +9,7 @@ class Mappers {
             type = Type.valueOf(this.type), // enum dal valore stringa
             price = this.price,
             property = this.property.toDomain(),
-            agent = this.agent
+            agentEmail = this.agentEmail
         )
     }
 
@@ -63,7 +58,7 @@ class Mappers {
             type = this.type!!.name,
             price = this.price,
             property = this.property.toResponse(),
-            agent = this.agent
+            agentEmail = this.agentEmail
         )
     }
 

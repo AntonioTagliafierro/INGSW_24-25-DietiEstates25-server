@@ -10,25 +10,7 @@ class MongoOfferDataSource (
     db: MongoDatabase
 ) : OfferDataSource {
     private val offers = db.getCollection<Offer>("offers")
-    override suspend fun getOfferByPropertyAndBuyer(propertyId: String, buyerUsername: String): Offer? {
-        return try {
-            val filter = Filters.and(
-                Filters.eq("propertyId", propertyId),
-                Filters.eq("buyerUsername", buyerUsername)
-            )
 
-            val offer = offers.find(filter).firstOrNull()
-            if (offer == null) {
-                println("Nessuna offerta trovata con propertyId=$propertyId e buyerdUsername=$buyerUsername")
-            } else {
-                println("Offerta trovata: $offer")
-            }
-            offer
-        } catch (e: Exception) {
-            println("Errore durante la ricerca dell'offerta: ${e.localizedMessage}")
-            null
-        }
-    }
 
     override suspend fun createOffer(offer: Offer, firstMessage: OfferMessage): Boolean {
         return try {
@@ -81,7 +63,7 @@ class MongoOfferDataSource (
         updateLastMessageStatus(offerId, false)
 
     private suspend fun updateLastMessageStatus(offerId: String, status: Boolean): Boolean {
-        val offer = offers.find(Filters.eq("id", offerId)).firstOrNull() ?: return false
+        val offer = offers.find(Filters.eq("_id", offerId)).firstOrNull() ?: return false
         if (offer.messages.isEmpty()) return false
 
         val updatedMessages = offer.messages.toMutableList()
@@ -89,7 +71,7 @@ class MongoOfferDataSource (
         updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(accepted = status)
 
         val result = offers.updateOne(
-            Filters.eq("id", offerId),
+            Filters.eq("_id", offerId),
             Updates.set("messages", updatedMessages)
         )
         return result.modifiedCount > 0
@@ -117,24 +99,24 @@ class MongoOfferDataSource (
         }
     }
 
-    override suspend fun getOffersByUserOrAgent(username: String): List<Offer> {
+    override suspend fun getOffersByUserOrAgent(userId: String): List<Offer> {
         return try {
             val result = offers.find(
                 Filters.or(
-                    Filters.eq("buyerId", username),
-                    Filters.eq("agentId", username)
+                    Filters.eq("buyerId", userId),
+                    Filters.eq("agentId", userId)
                 )
             ).toList()
 
             if (result.isEmpty()) {
-                println("Nessuna offerta trovata per user/agent $username")
+                println("Nessuna offerta trovata per user/agent $userId")
             } else {
-                println("Recuperate ${result.size} offerte per user/agent $username")
+                println("Recuperate ${result.size} offerte per user/agent $userId")
             }
 
             result
         } catch (e: Exception) {
-            println("Errore durante il recupero delle offerte per user/agent $username: ${e.localizedMessage}")
+            println("Errore durante il recupero delle offerte per user/agent $userId: ${e.localizedMessage}")
             emptyList()
         }
     }

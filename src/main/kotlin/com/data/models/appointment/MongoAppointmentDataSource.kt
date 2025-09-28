@@ -1,10 +1,13 @@
 package com.data.models.appointment
 
+import com.data.models.offer.OfferSummary
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
+import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
+import org.litote.kmongo.eq
 
 
 class MongoAppointmentDataSource (
