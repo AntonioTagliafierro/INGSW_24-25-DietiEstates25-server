@@ -37,11 +37,7 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
                 call.respond(HttpStatusCode.InternalServerError, "Error adding property listing")
             }
 
-//            if (success) {
-//                call.respond(HttpStatusCode.OK, data = entity.id.toString())
-//            } else {
-//                call.respond(HttpStatusCode.InternalServerError, "Error adding property listing")
-//            }
+
         }
 
         get("getallpropertieslisting") {
@@ -59,12 +55,8 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val listings = propertyListingDataSource.getListingsByEmail(email)
 
 
-            //val response = listings.map { it.toResponse() }
-
             call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
 
-
-            //call.respond(HttpStatusCode.OK, response)
         }
 
         get("getpropertieslistingbyid") {
@@ -76,12 +68,8 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val listings = propertyListingDataSource.getListingById(id)
 
 
-            //val response = listings.map { it.toResponse() }
-
             call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
 
-
-            //call.respond(HttpStatusCode.OK, response)
         }
 
         get("getpropertieslistingwithinradius") {

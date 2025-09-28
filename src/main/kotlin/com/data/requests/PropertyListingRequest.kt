@@ -1,5 +1,9 @@
 package com.data.requests
 
+import com.data.models.propertylisting.EnergyClass
+import com.data.models.propertylisting.Property
+import com.data.models.propertylisting.PropertyListing
+import com.data.models.propertylisting.Type
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
 import com.data.models.user.User
@@ -41,16 +45,16 @@ data class PropertyRequest(
     val propertyPicture: String? = null
 )
 
-fun String.toType(): com.data.models.propertylisting.Type =
-    _root_ide_package_.com.data.models.propertylisting.Type.values().find { it.label.equals(this, ignoreCase = true) }
+fun String.toType(): Type =
+    Type.values().find { it.label.equals(this, ignoreCase = true) }
         ?: throw IllegalArgumentException("Unknown Type: $this")
 
-fun String.toEnergyClass(): com.data.models.propertylisting.EnergyClass =
-    _root_ide_package_.com.data.models.propertylisting.EnergyClass.values().find { it.label.equals(this, ignoreCase = true) }
+fun String.toEnergyClass(): EnergyClass =
+    EnergyClass.values().find { it.label.equals(this, ignoreCase = true) }
         ?: throw IllegalArgumentException("Unknown EnergyClass: $this")
 
-fun PropertyListingRequest.toEntity(): com.data.models.propertylisting.PropertyListing {
-    return _root_ide_package_.com.data.models.propertylisting.PropertyListing(
+fun PropertyListingRequest.toEntity(): PropertyListing {
+    return PropertyListing(
         id = ObjectId(), // MongoDB assegna un nuovo ObjectId
         title = this.title,
         type = this.type.toType(),
@@ -60,8 +64,8 @@ fun PropertyListingRequest.toEntity(): com.data.models.propertylisting.PropertyL
     )
 }
 
-fun PropertyRequest.toEntity(): com.data.models.propertylisting.Property {
-    return _root_ide_package_.com.data.models.propertylisting.Property(
+fun PropertyRequest.toEntity(): Property {
+    return Property(
         city = this.city,
         cap = this.cap,
         country = this.country,

@@ -1,6 +1,7 @@
 package com.data.models.propertylisting
 
 import com.data.models.image.MongoImageDataSource
+import com.data.models.user.myToLowerCase
 import com.mongodb.client.model.Filters
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.service.GeoapifyService
@@ -31,17 +32,6 @@ class MongoPropertyListingDataSource(
     }
 
 
-//    override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {
-//        val allIds = listings.map { it.id.toString() }
-//        val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
-//
-//        return listings.map { listing ->
-//            val images = imagesMap[listing.id.toString()] ?: emptyList()
-//            listing.copy(
-//                property = listing.property.copy(images = images)
-//            )
-//        }
-//    }
 
     override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {
         val allIds = listings.map { it.id.toString() }
