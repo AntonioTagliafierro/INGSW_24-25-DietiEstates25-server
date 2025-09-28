@@ -15,6 +15,52 @@ fun Route.offerRouting(
 ) {
     route("/offers") {
 
+        post("/makeoffer") {
+            val request = runCatching { call.receiveNullable<OfferRequest>() }.getOrNull() ?: run {
+                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                return@post
+            }
+
+            val newMessage = OfferMessage(
+                senderId = request.buyerName,
+                timestamp = System.currentTimeMillis(),
+                amount = request.amount,
+                accepted = null
+            )
+
+            val existingOffer = offerDataSource.getOfferByPropertyAndBuyer(
+                propertyId = request.propertyId,
+                buyerId = request.buyerName
+            )
+
+            if (existingOffer == null) {
+
+                val newOffer = Offer(
+                    propertyId = request.propertyId,
+                    buyerName = request.buyerName,
+                    agentName = request.agentName,
+                    messages = mutableListOf(newMessage)
+                )
+
+                val wasCreated = offerDataSource.createOffer(newOffer, newMessage)
+                if (!wasCreated) {
+                    call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'offerta")
+                    return@post
+                }
+
+                call.respond(HttpStatusCode.Created, newOffer)
+            } else {
+
+                val success = offerDataSource.addOfferMessage(existingOffer.id.toString(), newMessage)
+                if (!success) {
+                    call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento del messaggio")
+                    return@post
+                }
+
+                call.respond(HttpStatusCode.OK, "Messaggio aggiunto all'offerta esistente")
+            }
+        }
+
         post("/create") {
             val request = kotlin.runCatching { call.receiveNullable<OfferRequest>() }.getOrNull() ?: run {
                 call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
@@ -23,13 +69,13 @@ fun Route.offerRouting(
 
             val offer = Offer(
                 propertyId = request.propertyId,
-                buyerId = request.buyerId,
-                agentId = request.agentId,
+                buyerName = request.buyerName,
+                agentName = request.agentName,
                 messages = mutableListOf()
             )
 
             val firstMessage = OfferMessage(
-                senderId = request.buyerId,
+                senderId = request.buyerName,
                 timestamp = System.currentTimeMillis(),
                 amount = request.amount,
                 accepted = null

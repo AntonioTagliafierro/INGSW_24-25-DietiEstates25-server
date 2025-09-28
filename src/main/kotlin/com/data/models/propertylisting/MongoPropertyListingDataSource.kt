@@ -65,7 +65,7 @@ class MongoPropertyListingDataSource(
 
     override suspend fun getListingsByEmail(email: String): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
-            val listings = collection.find(Filters.eq("agent.email", email)).toList()
+            val listings = collection.find(Filters.eq("agent.email", email.myToLowerCase())).toList()
             attachImagesToListings(listings)
         } catch (e: Exception) {
             e.printStackTrace()

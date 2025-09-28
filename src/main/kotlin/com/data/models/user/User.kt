@@ -35,8 +35,8 @@ enum class Role(val label: String) {
 open class User(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    private var username: String,
-    private val email: String,
+    var username: String,
+    var email: String,
     val name: String? = null,
     val surname: String? = null,
     var role: Role,
@@ -84,14 +84,6 @@ open class User(
         password = password,
         salt     = salt
     )
-
-    fun getEmail ( ) :String{
-        return email
-    }
-
-    fun getUsername():String{
-        return username
-    }
 
     fun generateRandomPassword(): String {
         val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%^&*"

@@ -51,7 +51,7 @@ fun Route.userAuth(
             )
 
             val updateResult = userDataSource.updateUserPassword(
-                email = user.getEmail(),
+                email = user.email.myToLowerCase(),
                 newHash = newHashed.hash,
                 newSalt = newHashed.salt
             )
@@ -179,10 +179,10 @@ fun Route.authenticate(
             call.respond(
                 UserResponse(
                     id = user.id.toString(),
-                    username = user.getUsername(),
+                    username = user.username,
                     name = user.name,
                     surname = user.surname,
-                    email = user.getEmail(),
+                    email = user.email.myToLowerCase(),
                     role = user.role.label
                 )
             )
@@ -293,10 +293,10 @@ fun Route.state(){
             val token = tokenService.generate(
                 config = tokenConfig,
                 TokenClaim("userId",   user.id.toString()),
-                TokenClaim("username", user.getUsername()),
+                TokenClaim("username", user.username),
                 TokenClaim("surname", user.surname ?: ""),
                 TokenClaim("name",user.name ?: ""),
-                TokenClaim("email", user.getEmail()),
+                TokenClaim("email", user.email.myToLowerCase()),
                 TokenClaim("role",     user.role.label)
             )
 

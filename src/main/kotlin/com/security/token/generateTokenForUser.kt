@@ -1,6 +1,6 @@
 package com.security.token
 import com.data.models.user.User
-
+import com.data.models.user.myToLowerCase
 
 
 fun generateTokenForUser(
@@ -11,8 +11,8 @@ fun generateTokenForUser(
     return tokenService.generate(
         config = config,
         TokenClaim("userId", user.id.toString()),
-        TokenClaim("username", user.getUsername()),
-        TokenClaim("email", user.getEmail()),
+        TokenClaim("username", user.username),
+        TokenClaim("email", user.email.myToLowerCase()),
         TokenClaim("role", user.role.label)
     )
 }

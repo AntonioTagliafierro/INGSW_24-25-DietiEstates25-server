@@ -31,9 +31,9 @@ class MongoUserDataSource(
     override suspend fun getUserByEmail(email: String): User? {
         println("Cerco utente con email: $email")
 
-        val findUser = users.find(Filters.eq("email", email)).firstOrNull()
+        val findUser = users.find(Filters.eq("email", email.myToLowerCase())).firstOrNull()
 
-        println("Utente trovato risultato: ${findUser?.getEmail()}")
+        println("Utente trovato risultato: ${findUser?.email?.myToLowerCase()}")
 
         return findUser
     }
@@ -41,17 +41,33 @@ class MongoUserDataSource(
     override suspend fun insertUser(user: User): Boolean {
         println("Inserendo utente: $user")
 
+        user.email = user.email.myToLowerCase()
+        user.username = user.username.myToLowerCase()
+
+        if(findUserByUsername (user.username)) {
+            user.username += randomThreeNumbers()
+        }
+
         val result = users.insertOne(user)
 
         println("Utente inserito: $result")
         return result.wasAcknowledged()
     }
 
-    override suspend fun checkUserByEmail(user: User): Boolean {
-        println("cercando utente: ${user.getEmail()}")
+    private suspend fun findUserByUsername(username: String): Boolean {
+        println("Cerco utente con username: $username")
 
-        if ( users.find(Filters.eq("email", user.getEmail())).firstOrNull() != null) return true
-        else return false
+        val findUser = users.find(Filters.eq("username", username)).firstOrNull()
+        return findUser != null
+    }
+
+    override suspend fun checkUserByEmail(user: User): Boolean {
+
+        println("cercando utente: ${user.email}")
+        val userEmail = user.email.myToLowerCase()
+        val existingUser = users.find(Filters.eq("email", userEmail)).firstOrNull()
+
+        return existingUser != null
 
     }
 
@@ -60,7 +76,7 @@ class MongoUserDataSource(
 
         val findUser = users.find(Filters.eq("id", userId)).firstOrNull()
 
-        println("Utente trovato risultato: ${findUser?.getEmail()}")
+        println("Utente trovato risultato: ${findUser?.email?.myToLowerCase()}")
 
         return findUser
 
@@ -125,23 +141,31 @@ class MongoUserDataSource(
     }
 
     override suspend fun updateUsername(email: String, username: String): Boolean {
+        val userEmail = email.myToLowerCase()
+
+        if(findUserByUsername(username)) return false
+
         val updateResult = users.updateOne(
-            Filters.eq("email", email),
+            Filters.eq("email", userEmail),
             Updates.set("username", username)
         )
         return updateResult.wasAcknowledged()
     }
 
     override suspend fun updateUserRole(email: String , role : Role) :Boolean{
+
+        val userEmail = email.myToLowerCase()
+
         val updateResult = users.updateOne(
-            Filters.eq("email", email),
+            Filters.eq("email", userEmail),
             Updates.set("role", role.label)
         )
         return updateResult.wasAcknowledged()
     }
 
-    override suspend fun deleteUser(userEmail: String): Boolean {
+    override suspend fun deleteUser(email: String): Boolean {
 
+        val userEmail = email.myToLowerCase()
         val deleteUser = users.deleteOne(Filters.eq("email", userEmail))
 
         return deleteUser.deletedCount > 0
@@ -149,12 +173,12 @@ class MongoUserDataSource(
 
     override suspend fun updateFullName(email: String, value: String): Boolean {
         val parts = value.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
-
+        val userEmail  = email.myToLowerCase()
         val surname = parts.last()
         val name = parts.dropLast(1).joinToString(" ")
 
         val updateResult = users.updateOne(
-            Filters.eq("email", email),
+            Filters.eq("email", userEmail),
             Updates.combine(
                 Updates.set("name", name),
                 Updates.set("surname", surname)
@@ -185,6 +209,23 @@ class MongoUserDataSource(
     }
 
 }
+
+fun String.myToLowerCase(): String {
+    val result = StringBuilder(this.length)
+    for (c in this) {
+        if (c in 'A'..'Z') {
+            result.append((c.code + 32).toChar())
+        } else {
+            result.append(c)
+        }
+    }
+    return result.toString()
+}
+
+fun randomThreeNumbers(): List<Int> {
+    return List(3) { (0..9).random() } // numeri da 0 a 9
+}
+
 
 
 

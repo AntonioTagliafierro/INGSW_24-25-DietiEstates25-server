@@ -8,6 +8,8 @@ import kotlinx.serialization.Serializable
 import com.data.models.user.User
 
 
+
+
 @Serializable
 data class PropertyListing(
     @Serializable(with = ObjectIdSerializer::class)
