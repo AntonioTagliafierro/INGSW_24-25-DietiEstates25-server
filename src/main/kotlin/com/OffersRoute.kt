@@ -1,10 +1,14 @@
 package com
 
+import com.data.models.activity.ActivityDataSource
 import com.data.models.offer.Offer
 import com.data.models.offer.OfferDataSource
 import com.data.models.offer.OfferMessage
+import com.data.models.user.UserDataSource
+import com.data.requests.AuthRequest
 import com.data.requests.MessageRequest
 import com.data.requests.OfferRequest
+import com.security.hashing.HashingService
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -15,52 +19,6 @@ fun Route.offerRouting(
 ) {
     route("/offers") {
 
-        post("/makeoffer") {
-            val request = runCatching { call.receiveNullable<OfferRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
-                return@post
-            }
-
-            val newMessage = OfferMessage(
-                senderId = request.buyerName,
-                timestamp = System.currentTimeMillis(),
-                amount = request.amount,
-                accepted = null
-            )
-
-            val existingOffer = offerDataSource.getOfferByPropertyAndBuyer(
-                propertyId = request.propertyId,
-                buyerId = request.buyerName
-            )
-
-            if (existingOffer == null) {
-
-                val newOffer = Offer(
-                    propertyId = request.propertyId,
-                    buyerName = request.buyerName,
-                    agentName = request.agentName,
-                    messages = mutableListOf(newMessage)
-                )
-
-                val wasCreated = offerDataSource.createOffer(newOffer, newMessage)
-                if (!wasCreated) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'offerta")
-                    return@post
-                }
-
-                call.respond(HttpStatusCode.Created, newOffer)
-            } else {
-
-                val success = offerDataSource.addOfferMessage(existingOffer.id.toString(), newMessage)
-                if (!success) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento del messaggio")
-                    return@post
-                }
-
-                call.respond(HttpStatusCode.OK, "Messaggio aggiunto all'offerta esistente")
-            }
-        }
-
         post("/create") {
             val request = kotlin.runCatching { call.receiveNullable<OfferRequest>() }.getOrNull() ?: run {
                 call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
@@ -69,13 +27,13 @@ fun Route.offerRouting(
 
             val offer = Offer(
                 propertyId = request.propertyId,
-                buyerName = request.buyerName,
-                agentName = request.agentName,
+                buyerId = request.buyerId,
+                agentId = request.agentId,
                 messages = mutableListOf()
             )
 
             val firstMessage = OfferMessage(
-                senderId = request.buyerName,
+                senderId = request.buyerId,
                 timestamp = System.currentTimeMillis(),
                 amount = request.amount,
                 accepted = null
@@ -86,7 +44,6 @@ fun Route.offerRouting(
                 call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'offerta")
                 return@post
             }
-
 
             call.respond(HttpStatusCode.OK, offer)
         }

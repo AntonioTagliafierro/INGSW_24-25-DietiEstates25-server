@@ -2,7 +2,11 @@ package com
 
 import com.data.models.activity.MongoActivityDataSource
 import com.data.models.agency.MongoAgencyDataSource
+import com.data.models.appointment.Appointment
+import com.data.models.appointment.MongoAppointmentDataSource
 import com.data.models.image.MongoImageDataSource
+import com.data.models.notification.MongoNotificationDataSource
+import com.data.models.notification.Notification
 import com.data.models.propertylisting.MongoPropertyListingDataSource
 import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.MongoUserDataSource

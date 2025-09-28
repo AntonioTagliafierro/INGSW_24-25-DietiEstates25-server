@@ -1,8 +1,7 @@
-package com.data.requests
+package com.data.models.propertylisting
 
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
-import com.data.models.user.User
 
 @Serializable
 data class PropertyListingRequest(
@@ -10,7 +9,7 @@ data class PropertyListingRequest(
     val type: String, // "Rent" o "Sell"
     val price: Float,
     val property: PropertyRequest,
-    val agent: User
+    val agentEmail: String
 )
 
 
@@ -41,27 +40,27 @@ data class PropertyRequest(
     val propertyPicture: String? = null
 )
 
-fun String.toType(): com.data.models.propertylisting.Type =
-    _root_ide_package_.com.data.models.propertylisting.Type.values().find { it.label.equals(this, ignoreCase = true) }
+fun String.toType(): Type =
+    Type.values().find { it.label.equals(this, ignoreCase = true) }
         ?: throw IllegalArgumentException("Unknown Type: $this")
 
-fun String.toEnergyClass(): com.data.models.propertylisting.EnergyClass =
-    _root_ide_package_.com.data.models.propertylisting.EnergyClass.values().find { it.label.equals(this, ignoreCase = true) }
+fun String.toEnergyClass(): EnergyClass =
+    EnergyClass.values().find { it.label.equals(this, ignoreCase = true) }
         ?: throw IllegalArgumentException("Unknown EnergyClass: $this")
 
-fun PropertyListingRequest.toEntity(): com.data.models.propertylisting.PropertyListing {
-    return _root_ide_package_.com.data.models.propertylisting.PropertyListing(
+fun PropertyListingRequest.toEntity(): PropertyListing {
+    return PropertyListing(
         id = ObjectId(), // MongoDB assegna un nuovo ObjectId
         title = this.title,
         type = this.type.toType(),
         price = this.price,
         property = this.property.toEntity(),
-        agent = this.agent
+        agentEmail = this.agentEmail
     )
 }
 
-fun PropertyRequest.toEntity(): com.data.models.propertylisting.Property {
-    return _root_ide_package_.com.data.models.propertylisting.Property(
+fun PropertyRequest.toEntity(): Property {
+    return Property(
         city = this.city,
         cap = this.cap,
         country = this.country,
@@ -85,6 +84,6 @@ fun PropertyRequest.toEntity(): com.data.models.propertylisting.Property {
         description = this.description,
         propertyPicture = this.propertyPicture,
 
-        )
+    )
 }
 

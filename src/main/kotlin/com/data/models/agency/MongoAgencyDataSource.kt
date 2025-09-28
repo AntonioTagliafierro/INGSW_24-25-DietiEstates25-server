@@ -1,7 +1,6 @@
 package com.data.models.agency
 
 
-import com.data.models.user.myToLowerCase
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
@@ -44,8 +43,6 @@ class MongoAgencyDataSource (
 
     override suspend fun insertAgency( agency: Agency): Boolean {
         println("Inserendo agenzia: $agency")
-
-        agency.agencyEmail = agency.agencyEmail.myToLowerCase()
 
         val result = agencies.insertOne(agency)
 
@@ -122,7 +119,7 @@ class MongoAgencyDataSource (
 
     override suspend fun getAgencyByEmail(email: String): Agency? {
         return try {
-            val agency = agencies.find(Filters.eq("agencyEmail", email.myToLowerCase())).firstOrNull()
+            val agency = agencies.find(Filters.eq("agencyEmail", email)).firstOrNull()
 
             if (agency == null) {
                 println("Nessuna agenzia trovata con email: $email")
