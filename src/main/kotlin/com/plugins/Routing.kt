@@ -26,8 +26,6 @@ fun Application.configureRouting(
     gitHubOAuthService: GitHubOAuthService,
     imageDataSource: ImageDataSource,
     propertyListingDataSource: PropertyListingDataSource,
-    appointmentDataSource: AppointmentDataSource,
-    notificationDataSource: NotificationDataSource,
     activityDataSource: ActivityDataSource,
 ) {
 
@@ -64,7 +62,6 @@ fun Application.configureRouting(
 
         propertyListingRoutes(propertyListingDataSource)
 
-        appointmentRoutes(appointmentDataSource, notificationDataSource)
 
         profileRoutes(userDataSource, hashingService, activityDataSource)
 

@@ -1,9 +1,12 @@
 package com.data.models.appointment
 
 interface AppointmentDataSource {
-    suspend fun insertAppointment(appointment: Appointment): Boolean
-    suspend fun getAppointmentsByAgent(email: String): List<Appointment>
-    suspend fun updateStatus(id: String, status: AppointmentStatus): Boolean
-    suspend fun getAppointmentById(id: String): Appointment?
-    suspend fun getAppointmentsByUserEmail(email: String): List<Appointment>
+    suspend fun createAppointemnt(appointment: Appointment, firstMessage: AppointmentMessage): Boolean
+    suspend fun addAppointmentMessage(appointmentId: String, newMessage: AppointmentMessage): Boolean
+    suspend fun acceptAppointment(appointmentId: String):Boolean
+    suspend fun declineAppointment(appointmentId: String):Boolean
+    suspend fun getAllAppointments(): List<AppointmentSummary>
+    suspend fun getAppointmentsByUserOrAgent(userId: String): List<Appointment>
+    suspend fun getAppointmentByListingId(ListingId: String): List<Appointment>
+
 }

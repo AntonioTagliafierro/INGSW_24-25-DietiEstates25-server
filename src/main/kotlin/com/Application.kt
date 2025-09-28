@@ -49,8 +49,7 @@ fun Application.module() {
     val activityDataSource = MongoActivityDataSource(database)
 
     val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
-    val appointmentCollection = database.getCollection<Appointment>("appointments")
-    val notificationCollection = database.getCollection<Notification>("notifications")
+
 
 
     val tokenService = JwtTokenService()
@@ -101,11 +100,7 @@ fun Application.module() {
         imageDataSource = imageDataSource
     )
 
-    // Appointments
-    val appointmentDataSource = MongoAppointmentDataSource(appointmentCollection)
 
-    // Notifications
-    val notificationDataSource = MongoNotificationDataSource(notificationCollection)
 
 
     val gitHubOAuthService = GitHubOAuthService(
@@ -129,8 +124,6 @@ fun Application.module() {
         gitHubOAuthService,
         imageDataSource,
         propertyListingDataSource,
-        appointmentDataSource,
-        notificationDataSource,
         activityDataSource
     )
 
