@@ -108,7 +108,7 @@ class MongoPropertyListingDataSource(
                 val listings = collection.find(
                     Filters.and(
                         Filters.eq("type", type),
-                        Filters.eq("property.city", city) // 👈 campo annidato
+                        Filters.eq("property.city", city) //  campo annidato
                     )
                 ).toList()
 
