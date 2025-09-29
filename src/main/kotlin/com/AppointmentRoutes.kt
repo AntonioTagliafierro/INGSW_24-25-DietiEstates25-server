@@ -19,23 +19,23 @@ import io.ktor.server.routing.route
 fun Route.appointmentRoutes(
     appointmentDataSource: AppointmentDataSource
 ){
-    route("/appointment"){
+    route("/appointments"){
 
-        post("/create") {
+        post("/bookappointment") {
             val request = kotlin.runCatching { call.receiveNullable<AppointmentRequest>() }.getOrNull() ?: run {
                 call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
                 return@post
             }
 
             val appointment = Appointment(
-                propertyId = request.propertyId,
-                userId = request.userId,
-                agentId = request.agentId,
+                listing = request.listing,
+                user = request.user,
+                agent = request.user,
                 date = request.date
             )
 
             val firstMessage = AppointmentMessage(
-                senderId = request.userId,
+                senderId = request.user.id.toString(),
                 timestamp = System.currentTimeMillis(),
                 date = request.date,
                 accepted = null
