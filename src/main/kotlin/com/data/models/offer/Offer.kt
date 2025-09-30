@@ -18,7 +18,7 @@ data class Offer(
 data class OfferMessage(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    val senderId: String,
+    val senderName: String,
     val timestamp: Long,
     val amount: Double?,
     val accepted: Boolean? = null // null = idle, true = accettata, false = rifiutata

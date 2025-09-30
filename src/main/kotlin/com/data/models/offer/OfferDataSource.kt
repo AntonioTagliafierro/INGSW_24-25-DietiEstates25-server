@@ -7,6 +7,6 @@ interface  OfferDataSource {
     suspend fun acceptOffer(offerId: String): Boolean
     suspend fun declineOffer(offerId: String): Boolean
     suspend fun getAllOffers(): List<OfferSummary>
-    suspend fun getOffersByUserOrAgent(userId: String): List<Offer>
+    suspend fun getOffersByUserOrAgent(username: String,  isBuyerId: Boolean): List<Offer>
     suspend fun getOfferByPropertyAndBuyer(propertyId: String, buyerId: String): Offer?
 }

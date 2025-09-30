@@ -3,6 +3,8 @@ package com
 import com.data.models.offer.Offer
 import com.data.models.offer.OfferDataSource
 import com.data.models.offer.OfferMessage
+import com.data.models.user.Role
+import com.data.models.user.UserDataSource
 import com.data.requests.MessageRequest
 import com.data.requests.OfferRequest
 import io.ktor.http.*
@@ -11,7 +13,8 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
 fun Route.offerRouting(
-    offerDataSource: OfferDataSource
+    offerDataSource: OfferDataSource,
+    userDataSource: UserDataSource,
 ) {
     route("/offers") {
 
@@ -22,7 +25,7 @@ fun Route.offerRouting(
             }
 
             val newMessage = OfferMessage(
-                senderId = request.buyerName,
+                senderName = request.buyerName,
                 timestamp = System.currentTimeMillis(),
                 amount = request.amount,
                 accepted = null
@@ -75,7 +78,7 @@ fun Route.offerRouting(
             )
 
             val firstMessage = OfferMessage(
-                senderId = request.buyerName,
+                senderName = request.buyerName,
                 timestamp = System.currentTimeMillis(),
                 amount = request.amount,
                 accepted = null
@@ -99,7 +102,7 @@ fun Route.offerRouting(
             }
 
             val newMessage = OfferMessage(
-                senderId = request.senderId,
+                senderName = request.senderId,
                 timestamp = System.currentTimeMillis(),
                 amount = request.amount,
                 accepted = null
@@ -168,13 +171,15 @@ fun Route.offerRouting(
                 return@get
             }
 
+            val user = userDataSource.getUserById(userId)
+
             try {
-                val offers = offerDataSource.getOffersByUserOrAgent(userId)
+                val offers = offerDataSource.getOffersByUserOrAgent(user!!.username, user.role == Role.AGENT_USER)
                 call.respond(HttpStatusCode.OK, offers)
             } catch (e: Exception) {
                 call.respond(
                     HttpStatusCode.InternalServerError,
-                    "Errore durante il recupero offerte per userId=$userId: ${e.localizedMessage}"
+                    "Errore durante il recupero offerte per userId=$user!!.username: ${e.localizedMessage}"
                 )
             }
         }

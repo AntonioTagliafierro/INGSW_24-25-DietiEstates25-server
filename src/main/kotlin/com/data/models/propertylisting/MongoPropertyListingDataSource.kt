@@ -67,11 +67,12 @@ class MongoPropertyListingDataSource(
         }
     }
 
-    override suspend fun getListingById(id: String): PropertyListing? = withContext(Dispatchers.IO) {
-        try {
-            val listing = collection.find(Filters.eq("id", id)).firstOrNull() ?: return@withContext null
-            val images = imageDataSource.getHouseImages(listing.id.toString())
-            listing.copy(property = listing.property.copy(images = images))
+
+    override suspend fun getListingById( id : String ): PropertyListing?{
+        return try {
+            val listing = collection.find(Filters.eq("id", id))
+            attachImagesToListings(listing.toList()).firstOrNull()
+
         } catch (e: Exception) {
             e.printStackTrace()
             null

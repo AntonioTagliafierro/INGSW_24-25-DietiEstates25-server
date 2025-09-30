@@ -3,6 +3,7 @@ package com
 import com.data.models.activity.MongoActivityDataSource
 import com.data.models.agency.MongoAgencyDataSource
 import com.data.models.image.MongoImageDataSource
+import com.data.models.offer.MongoOfferDataSource
 import com.data.models.propertylisting.MongoPropertyListingDataSource
 import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.MongoUserDataSource
@@ -40,10 +41,10 @@ fun Application.module() {
 
     val database = getDatabase()
     val userDataSource = MongoUserDataSource(database)
+    val offerDataSource = MongoOfferDataSource(database)
     val agencyDataSource = MongoAgencyDataSource(database)
     val imageDataSource = MongoImageDataSource(database)
     val activityDataSource = MongoActivityDataSource(database)
-
     val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
 
 
@@ -120,7 +121,8 @@ fun Application.module() {
         gitHubOAuthService,
         imageDataSource,
         propertyListingDataSource,
-        activityDataSource
+        activityDataSource,
+        offerDataSource
     )
 
     configureMonitoring()

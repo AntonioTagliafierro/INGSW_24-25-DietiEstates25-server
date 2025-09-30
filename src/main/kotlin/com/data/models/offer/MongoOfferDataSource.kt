@@ -117,14 +117,18 @@ class MongoOfferDataSource (
         }
     }
 
-    override suspend fun getOffersByUserOrAgent(username: String): List<Offer> {
+    override suspend fun getOffersByUserOrAgent(username: String, isAgent: Boolean): List<Offer> {
         return try {
-            val result = offers.find(
-                Filters.or(
-                    Filters.eq("buyerId", username),
-                    Filters.eq("agentId", username)
-                )
-            ).toList()
+
+            val result = if ( isAgent ) {
+                offers.find(
+                    Filters.eq("agentName", username)
+                ).toList()
+            }else{
+                offers.find(
+                    Filters.eq("buyerName", username)
+                ).toList()
+            }
 
             if (result.isEmpty()) {
                 println("Nessuna offerta trovata per user/agent $username")

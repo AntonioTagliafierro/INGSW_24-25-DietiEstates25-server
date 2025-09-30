@@ -26,9 +26,6 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val request = call.receive<PropertyListingRequest>()
             val entity = request.toEntity()
 
-
-
-
             println(entity.id)
 
             println(entity.id.toString())
@@ -43,11 +40,6 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
                 call.respond(HttpStatusCode.InternalServerError, "Error adding property listing")
             }
 
-//            if (success) {
-//                call.respond(HttpStatusCode.OK, data = entity.id.toString())
-//            } else {
-//                call.respond(HttpStatusCode.InternalServerError, "Error adding property listing")
-//            }
         }
 
         get("getallpropertieslisting") {
@@ -73,35 +65,38 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             //call.respond(HttpStatusCode.OK, response)
         }
 
-        get("getpropertieslistingbyid") {
-            val id = call.receive<String>()
+        get("/{id}") {
+            val id = call.parameters["id"]
+
             if (id.isNullOrBlank()) {
                 return@get call.respond(HttpStatusCode.BadRequest, "ListingID is required")
             }
 
-            val listings = propertyListingDataSource.getListingById(id)
+            val listing = propertyListingDataSource.getListingById(id)
 
+            println("PORCODIO CHE SBALLO ${listing?.property?.city ?: "AOOOO..."}")
 
-            //val response = listings.map { it.toResponse() }
-
-            call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
-
-
-            //call.respond(HttpStatusCode.OK, response)
+            if (listing != null) {
+                call.respond(HttpStatusCode.OK, listing)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Listing not found")
+            }
         }
 
-        get("getpropertieslistingwithinradius") {
-            val lat = call.parameters["lat"]?.toDoubleOrNull()
-            val lon = call.parameters["lon"]?.toDoubleOrNull()
-            val radius = call.parameters["radius"]?.toIntOrNull() ?: 1000
+        get("getpropertieslistingbyid/{id}") {
+            val id = call.parameters["id"]
 
-            if (lat == null || lon == null) {
-                return@get call.respond(HttpStatusCode.BadRequest, "Missing or invalid coordinates")
+            if (id.isNullOrBlank()) {
+                return@get call.respond(HttpStatusCode.BadRequest, "ListingID is required")
             }
 
-            val listings = propertyListingDataSource.getListingWithinRadius(lat, lon, radius)
-            val response = listings.map { it.toResponse() }
-            call.respond(HttpStatusCode.OK, response)
+            val listing = propertyListingDataSource.getListingById(id)
+
+            if (listing != null) {
+                call.respond(HttpStatusCode.OK, listing)
+            } else {
+                call.respond(HttpStatusCode.NotFound, "Listing not found")
+            }
         }
 
 

@@ -4,6 +4,7 @@ import com.*
 import com.data.models.activity.ActivityDataSource
 import com.data.models.agency.AgencyDataSource
 import com.data.models.image.ImageDataSource
+import com.data.models.offer.OfferDataSource
 import com.data.models.propertylisting.PropertyListingDataSource
 import com.data.models.user.UserDataSource
 import com.security.hashing.HashingService
@@ -25,10 +26,15 @@ fun Application.configureRouting(
     imageDataSource: ImageDataSource,
     propertyListingDataSource: PropertyListingDataSource,
     activityDataSource: ActivityDataSource,
+    offerDataSource : OfferDataSource,
 ) {
 
 
     routing {
+        offerRouting(
+            offerDataSource,
+            userDataSource
+        )
         userAuth(
             hashingService,
             userDataSource,
