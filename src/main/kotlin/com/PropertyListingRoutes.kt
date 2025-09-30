@@ -7,6 +7,7 @@ import com.data.requests.PropertySearchRequest
 import com.data.requests.toEntity
 
 import com.data.responses.ListResponse
+import com.data.responses.PropertyListingResponse
 import com.data.responses.toResponse
 import com.mongodb.client.model.Filters
 import io.ktor.http.HttpStatusCode
@@ -119,11 +120,23 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
                 val listings = propertyListingDataSource.getListingsByTypeAndCity(type, city)
                 println(" Recuperati ${listings.size} risultati dal DB")
 
-                val response = listings.map { it.toResponse() }
+                val response = ListResponse(
+                    success = true,
+                    data = listings,
+                    message = null
+                )
+
                 call.respond(HttpStatusCode.OK, response)
             } catch (e: Exception) {
                 e.printStackTrace()
-                call.respond(HttpStatusCode.InternalServerError, "Errore lato server: ${e.message}")
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    ListResponse<List<PropertyListingResponse>>(
+                        success = false,
+                        data = null,
+                        message = "Errore lato server: ${e.message}"
+                    )
+                )
             }
         }
 

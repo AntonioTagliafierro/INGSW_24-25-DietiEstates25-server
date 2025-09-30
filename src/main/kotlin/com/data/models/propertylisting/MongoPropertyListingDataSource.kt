@@ -38,9 +38,12 @@ class MongoPropertyListingDataSource(
         val allIds = listings.map { it.id.toString() }
         val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
 
+        println(" Trovati ${listings.size} documenti in MongoDB")
+
         return listings.map { listing ->
             val images = imagesMap[listing.id.toString()] ?: emptyList()
             listing.copy(property = listing.property.copy(images = images))
+
         }
     }
 
