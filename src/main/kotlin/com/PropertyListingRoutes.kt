@@ -141,27 +141,35 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
 
             val filters = mutableListOf<Bson>()
 
+            // Filtra per type (sempre obbligatorio)
+            request.type?.let { filters += Filters.eq("type", it) }
 
-            filters += Filters.eq("type", request.type)
-            filters += Filters.eq("property.city", request.city)
-
-
-            request.minPrice?.let { filters += Filters.gte("price", it.toInt()) }
-            request.maxPrice?.let { filters += Filters.lte("price", it.toInt()) }
-
-            request.rooms?.let {
-                if (it > 0) {
-                    filters += Filters.gte("property.numberOfRooms", it)
-                }
+            // Solo se city NON è "ALL" aggiungiamo il filtro
+            if (!request.city.isNullOrBlank() && request.city != "ALL") {
+                filters += Filters.eq("property.city", request.city)
             }
 
+            // Prezzo minimo
+            request.minPrice?.let { filters += Filters.gte("price", it.toInt()) }
+
+            // Prezzo massimo
+            request.maxPrice?.let { filters += Filters.lte("price", it.toInt()) }
+
+            // Stanze (>= rooms)
+            request.rooms?.let {
+                if (it > 0) filters += Filters.gte("property.numberOfRooms", it)
+            }
+
+            // Classe energetica
             request.energyClass?.let { filters += Filters.eq("property.energyClass", it) }
 
-            if (request.elevator == true) filters += Filters.eq<Boolean>("property.elevator", true)
-            if (request.gatehouse == true) filters += Filters.eq<Boolean>("property.gatehouse", true)
-            if (request.balcony == true) filters += Filters.eq<Boolean>("property.balcony", true)
-            if (request.roof == true) filters += Filters.eq<Boolean>("property.roof", true)
+            // Boolean flags
+            if (request.elevator == true) filters += Filters.eq("property.elevator", true)
+            if (request.gatehouse == true) filters += Filters.eq("property.gatehouse", true)
+            if (request.balcony == true) filters += Filters.eq("property.balcony", true)
+            if (request.roof == true) filters += Filters.eq("property.roof", true)
 
+            // Query finale
             val query = if (filters.isEmpty()) Filters.empty() else Filters.and(filters)
 
             val listings = propertyListingDataSource.searchWithFilters(query)

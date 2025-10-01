@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class PropertySearchRequest(
     val type: String,
-    val city: String,
+    val city: String? = null,
     val minPrice: Float? = null,
     val maxPrice: Float? = null,
     val rooms: Int? = null,
