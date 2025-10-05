@@ -10,16 +10,35 @@ class MongoOfferDataSource (
     db: MongoDatabase
 ) : OfferDataSource {
     private val offers = db.getCollection<Offer>("offers")
-    override suspend fun getOfferByPropertyAndBuyer(propertyId: String, buyerUsername: String): Offer? {
+
+
+    override suspend fun getOffer(propertyId: String , buyerName: String): Offer? {
         return try {
             val filter = Filters.and(
                 Filters.eq("propertyId", propertyId),
-                Filters.eq("buyerUsername", buyerUsername)
+                Filters.eq("buyerName", buyerName)
             )
 
             val offer = offers.find(filter).firstOrNull()
             if (offer == null) {
-                println("Nessuna offerta trovata con propertyId=$propertyId e buyerdUsername=$buyerUsername")
+                println("Nessuna offerta trovata con propertyId=$propertyId e buyerdUsername=$buyerName")
+            } else {
+                println("Offerta trovata: $offer")
+            }
+            offer
+        } catch (e: Exception) {
+            println("Errore durante la ricerca dell'offerta: ${e.localizedMessage}")
+            null
+        }
+    }
+
+    override suspend fun getOffer(offerId : String): Offer? {
+        return try {
+            val filter = Filters.eq("id", offerId)
+
+            val offer = offers.find(filter).firstOrNull()
+            if (offer == null) {
+                println("Nessuna offerta trovata con offerId=$offerId ")
             } else {
                 println("Offerta trovata: $offer")
             }
@@ -47,18 +66,15 @@ class MongoOfferDataSource (
             val offer = offers.find(Filters.eq("id", offerId)).firstOrNull()
                 ?: return false.also { println("Nessuna offerta trovata con id=$offerId") }
 
-            if (offer.messages.isEmpty()) return false
-
             val lastMessage = offer.messages.last()
 
-
-            if (lastMessage.accepted == true) {
+            if (lastMessage.status == OfferStatus.ACCEPTED) {
                 println("L'ultima offerta è già accettata  non è possibile aggiungere altri messaggi")
                 return false
             }
 
             val updatedMessages = offer.messages.toMutableList()
-            updatedMessages[updatedMessages.lastIndex] = lastMessage.copy(accepted = null)
+            updatedMessages[updatedMessages.lastIndex] = lastMessage.copy(status = OfferStatus.REJECTED)
             updatedMessages.add(newMessage)
 
             val result = offers.updateOne(
@@ -80,13 +96,18 @@ class MongoOfferDataSource (
     override suspend fun declineOffer(offerId: String): Boolean =
         updateLastMessageStatus(offerId, false)
 
-    private suspend fun updateLastMessageStatus(offerId: String, status: Boolean): Boolean {
+    private suspend fun updateLastMessageStatus(offerId: String, accepted: Boolean): Boolean {
         val offer = offers.find(Filters.eq("id", offerId)).firstOrNull() ?: return false
         if (offer.messages.isEmpty()) return false
 
         val updatedMessages = offer.messages.toMutableList()
         val lastIndex = updatedMessages.lastIndex
-        updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(accepted = status)
+        if(accepted) {
+            updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(status = OfferStatus.ACCEPTED)
+        }else{
+            updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(status = OfferStatus.REJECTED)
+        }
+
 
         val result = offers.updateOne(
             Filters.eq("id", offerId),
@@ -95,12 +116,13 @@ class MongoOfferDataSource (
         return result.modifiedCount > 0
     }
 
-    override suspend fun getAllOffers(): List<OfferSummary> {
+    override suspend fun getSummaryOffers(propertyId :String): List<OfferSummary> {
         return try {
-            val allOffers = offers.find().toList()
-            val summaries = allOffers.flatMap { offer ->
+            val offerSummaryById = offers.find( Filters.eq("propertyId", propertyId)).toList()
+
+            val summaries = offerSummaryById.flatMap { offer ->
                 offer.messages.map { msg ->
-                    OfferSummary(amount = msg.amount, accepted = msg.accepted)
+                    OfferSummary(amount = msg.amount, status = msg.status)
                 }
             }
 
@@ -117,7 +139,7 @@ class MongoOfferDataSource (
         }
     }
 
-    override suspend fun getOffersByUserOrAgent(username: String, isAgent: Boolean): List<Offer> {
+    override suspend fun getOffers(username: String, isAgent : Boolean): List<Offer> {
         return try {
 
             val result = if ( isAgent ) {

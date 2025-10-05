@@ -6,6 +6,7 @@ data class OfferRequest(
     val propertyId: String,
     val buyerName: String,
     val agentName: String,
-    val amount: Double
+    val amount: Double,
+    val isAgent: Boolean
 )
 

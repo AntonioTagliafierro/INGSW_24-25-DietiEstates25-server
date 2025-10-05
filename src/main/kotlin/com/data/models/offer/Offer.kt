@@ -1,6 +1,7 @@
 package com.data.models.offer
 
 import com.security.serializer.ObjectIdSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
 
@@ -21,11 +22,21 @@ data class OfferMessage(
     val senderName: String,
     val timestamp: Long,
     val amount: Double?,
-    val accepted: Boolean? = null // null = idle, true = accettata, false = rifiutata
+    val status: OfferStatus // null = idle, true = accettata, false = rifiutata
 )
+
+@Serializable
+enum class OfferStatus {
+    @SerialName("PENDING")
+    PENDING,
+    @SerialName("ACCEPTED")
+    ACCEPTED,
+    @SerialName("REJECTED")
+    REJECTED
+}
 
 @Serializable
 data class OfferSummary(
     val amount: Double?,
-    val accepted: Boolean?
+    val status: OfferStatus
 )

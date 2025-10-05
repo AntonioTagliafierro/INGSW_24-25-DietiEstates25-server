@@ -18,5 +18,6 @@ interface UserDataSource {
     suspend fun updateUserRole(email: String , role : Role) :Boolean
     suspend fun deleteUser(email: String): Boolean
     suspend fun ensureSysAdmin(hashingService: HashingService, imageDataSource: ImageDataSource)
+    suspend fun getUserByUsername ( username : String): User?
 
 }

@@ -33,7 +33,9 @@ fun Application.configureRouting(
     routing {
         offerRouting(
             offerDataSource,
-            userDataSource
+            userDataSource,
+            propertyListingDataSource,
+            activityDataSource,
         )
         userAuth(
             hashingService,

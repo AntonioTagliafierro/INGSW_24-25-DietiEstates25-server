@@ -18,7 +18,8 @@ data class PropertyListing(
     val type: Type?,
     val price: Float,
     val property: Property,
-    val agent: User
+    val agent: User,
+    val available: Boolean = true
 )
 
 @Serializable
@@ -27,6 +28,7 @@ enum class Type(val label: String) {
     RENT("Rent"),
     @SerialName("Sell")
     SELL("Sell")
+
 }
 
 //    companion object {

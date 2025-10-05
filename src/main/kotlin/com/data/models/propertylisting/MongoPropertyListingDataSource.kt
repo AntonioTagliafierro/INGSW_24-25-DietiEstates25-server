@@ -3,6 +3,7 @@ package com.data.models.propertylisting
 import com.data.models.image.MongoImageDataSource
 import com.data.models.user.myToLowerCase
 import com.mongodb.client.model.Filters
+import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.service.GeoapifyService
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +33,20 @@ class MongoPropertyListingDataSource(
         }
     }
 
+    override suspend fun acceptListing(propertyId: String): Boolean {
+        return try {
+            val result = collection.updateOne(
+                Filters.eq("id", propertyId),
+                Updates.set("available", false)
+            )
+
+            result.matchedCount > 0 && result.modifiedCount > 0
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
 
 
     override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {

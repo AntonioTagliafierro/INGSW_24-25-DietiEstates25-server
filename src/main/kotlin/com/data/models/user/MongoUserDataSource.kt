@@ -17,6 +17,16 @@ class MongoUserDataSource(
     
     private val users = db.getCollection<User>("user")
 
+    override suspend fun getUserByUsername ( username : String): User?{
+        println("Cerco utente con email: $username")
+
+        val findUser = users.find(Filters.eq("username", username)).firstOrNull()
+
+        println("Utente trovato risultato: ${findUser?.email?.myToLowerCase()}")
+
+        return findUser
+    }
+
     override suspend fun updateUserPassword(email: String, newHash: String?, newSalt: String?): Boolean {
         val updateResult = users.updateOne(
             Filters.eq("email", email),

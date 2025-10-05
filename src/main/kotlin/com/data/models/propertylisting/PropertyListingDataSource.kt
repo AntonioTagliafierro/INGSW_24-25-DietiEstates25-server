@@ -11,6 +11,6 @@ interface PropertyListingDataSource {
 
     suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing>
     suspend fun searchWithFilters(query: Bson): List<PropertyListing>
-
+    suspend fun acceptListing(propertyId: String): Boolean
     suspend fun getListingById(id : String): PropertyListing?
 }
