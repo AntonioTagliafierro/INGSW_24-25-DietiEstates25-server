@@ -30,82 +30,116 @@ fun Route.appointmentRouting(
 ){
     route("/appointments"){
 
+//        post("/bookappointment") {
+//            val request = kotlin.runCatching { call.receiveNullable<AppointmentRequest>() }.getOrNull() ?: run {
+//                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+//                return@post
+//            }
+//
+//            val appointment = Appointment(
+//                listing = request.listing,
+//                user = request.user,
+//                agent = request.agent,
+//                date = request.date
+//            )
+//
+//            val message = AppointmentMessage(
+//                senderName = request.user.name!!,
+//                timestamp = System.currentTimeMillis(),
+//                date = request.date,
+//                status = AppointmentStatus.PENDING
+//            )
+//            val existingAppointment = appointmentDataSource.getAppointment(
+//                propertyId = request.listing.id.toString(),
+//                buyerName = request.user.name
+//            )
+//
+//            if (existingAppointment == null) {
+//
+//                val newAppointment = Appointment(
+//                    listing = request.listing,
+//                    user = request.user,
+//                    agent = request.agent,
+//                    date = request.date,
+//                    messages = mutableListOf(message)
+//                )
+//
+//                val wasCreated = appointmentDataSource.createAppointemnt(newAppointment, message)
+//                if (!wasCreated) {
+//                    call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'appuntamento")
+//                    return@post
+//                }
+//
+//            } else {
+//
+//                val success = appointmentDataSource.addAppointmentMessage(existingAppointment.id.toString(), message)
+//                if (!success) {
+//                    call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento del messaggio")
+//                    return@post
+//                }
+//
+//            }
+//            val wasAcknowledged = appointmentDataSource.createAppointemnt(appointment, message)
+//            if (!wasAcknowledged) {
+//                call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'appuntamento")
+//                return@post
+//            }
+//            val listingProperty = listingDataSource.getListingById(request.listing.id.toString())
+//
+//            if ( activityDataSource.insertActivity(
+//                    Activity(
+//                        userId = userDataSource.getUserByUsername(message.senderName)!!.id.toString(),
+//                        type = if( appointment == null )ActivityType.INSERT else ActivityType.OFFERED,
+//                        text =  if( existingAppointment == null ) "You inserted a listing on ${listingProperty!!.property.street}" else "You ask for an appointment on ${message.date} for the listing on ${listingProperty!!.property.street}"
+//                    )
+//                )){
+//                val updatedAppointment = appointmentDataSource.getAppointment(
+//                    propertyId = request.listing.id.toString(),
+//                    buyerName = request.user.name
+//                )
+//
+//                call.respond(HttpStatusCode.Created, updatedAppointment ?: message)
+//            } else {
+//                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
+//                return@post
+//            }
+//        }
+
         post("/bookappointment") {
-            val request = kotlin.runCatching { call.receiveNullable<AppointmentRequest>() }.getOrNull() ?: run {
+            val request = call.receiveNullable<AppointmentRequest>() ?: run {
                 call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
                 return@post
             }
 
+            val listing = listingDataSource.getListingById(request.listingId)
+            val user = userDataSource.getUserById(request.userId)
+            val agent = userDataSource.getUserById(request.agentId)
+
+            if (listing == null || user == null || agent == null) {
+                call.respond(HttpStatusCode.BadRequest, "Dati non validi.")
+                return@post
+            }
+
             val appointment = Appointment(
-                listing = request.listing,
-                user = request.user,
-                agent = request.user,
+                listing = listing,
+                user = user,
+                agent = agent,
                 date = request.date
             )
 
             val message = AppointmentMessage(
-                senderName = request.user.name!!,
+                senderName = user.username,
                 timestamp = System.currentTimeMillis(),
                 date = request.date,
                 status = AppointmentStatus.PENDING
             )
-            val existingAppointment = appointmentDataSource.getAppointment(
-                propertyId = request.listing.id.toString(),
-                buyerName = request.user.name
-            )
 
-            if (existingAppointment == null) {
-
-                val newAppointment = Appointment(
-                    listing = request.listing,
-                    user = request.user,
-                    agent = request.agent,
-                    date = request.date,
-                    messages = mutableListOf(message)
-                )
-
-                val wasCreated = appointmentDataSource.createAppointemnt(newAppointment, message)
-                if (!wasCreated) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'appuntamento")
-                    return@post
-                }
-
-            } else {
-
-                val success = appointmentDataSource.addAppointmentMessage(existingAppointment.id.toString(), message)
-                if (!success) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento del messaggio")
-                    return@post
-                }
-
-            }
-            val wasAcknowledged = appointmentDataSource.createAppointemnt(appointment, message)
-            if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'appuntamento")
-                return@post
-            }
-            val listingProperty = listingDataSource.getListingById(request.listing.id.toString())
-
-            if ( activityDataSource.insertActivity(
-                    Activity(
-                        userId = userDataSource.getUserByUsername(message.senderName)!!.id.toString(),
-                        type = if( appointment == null )ActivityType.INSERT else ActivityType.OFFERED,
-                        text =  if( existingAppointment == null ) "You inserted a listing on ${listingProperty!!.property.street}" else "You ask for an appointment on ${message.date} for the listing on ${listingProperty!!.property.street}"
-                    )
-                )){
-                val updatedAppointment = appointmentDataSource.getAppointment(
-                    propertyId = request.listing.id.toString(),
-                    buyerName = request.user.name
-                )
-
-                call.respond(HttpStatusCode.Created, updatedAppointment ?: message)
-            } else {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
-                return@post
-            }
-            call.respond(HttpStatusCode.OK, appointment)
+            val wasCreated = appointmentDataSource.createAppointemnt(appointment, message)
+            if (wasCreated)
+                call.respond(HttpStatusCode.Created, appointment)
+            else
+                call.respond(HttpStatusCode.InternalServerError, "Errore creazione appuntamento")
         }
-
 
         post("/message") {
             val request = runCatching { call.receiveNullable<AppointmentMessageRequest>() }.getOrNull() ?: run {
@@ -116,7 +150,7 @@ fun Route.appointmentRouting(
             val newMessage = AppointmentMessage(
                 senderName = request.senderId,
                 timestamp = System.currentTimeMillis(),
-                date = request.date,
+                date = request.date.toString(),
                 status = AppointmentStatus.PENDING
             )
 

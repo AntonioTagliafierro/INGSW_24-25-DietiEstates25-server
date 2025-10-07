@@ -17,8 +17,7 @@ data class Appointment(
     val listing: PropertyListing,
     val user: User,
     val agent: User,
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
+    val date: String,
     val status: AppointmentStatus = AppointmentStatus.PENDING,
     val messages: MutableList<AppointmentMessage> = mutableListOf()
 )
@@ -39,15 +38,13 @@ data class AppointmentMessage(
     val id: ObjectId = ObjectId.get(),
     val senderName: String,
     val timestamp: Long,
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
+    val date: String,
     val status: AppointmentStatus
 )
 
 @Serializable
 data class AppointmentSummary(
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
+    val date: String,
     val status: AppointmentStatus
 )
 
