@@ -2,6 +2,7 @@ package com
 
 import com.data.models.activity.MongoActivityDataSource
 import com.data.models.agency.MongoAgencyDataSource
+import com.data.models.appointment.MongoAppointmentDataSource
 import com.data.models.image.MongoImageDataSource
 import com.data.models.offer.MongoOfferDataSource
 import com.data.models.propertylisting.MongoPropertyListingDataSource
@@ -46,7 +47,7 @@ fun Application.module() {
     val imageDataSource = MongoImageDataSource(database)
     val activityDataSource = MongoActivityDataSource(database)
     val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
-
+    val appointmentDataSource = MongoAppointmentDataSource(database)
 
 
     val tokenService = JwtTokenService()
@@ -122,7 +123,8 @@ fun Application.module() {
         imageDataSource,
         propertyListingDataSource,
         activityDataSource,
-        offerDataSource
+        offerDataSource,
+        appointmentDataSource
     )
 
     configureMonitoring()
