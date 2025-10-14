@@ -1,16 +1,14 @@
 package com.data.requests
 
-import com.data.models.propertylisting.PropertyListing
-import com.data.models.user.User
+
 import kotlinx.serialization.Serializable
-import org.litote.kmongo.serialization.LocalDateSerializer
-import java.time.LocalDate
+import com.data.models.user.User
+import com.data.models.propertylisting.ListingSummary
 
 @Serializable
 data class AppointmentRequest(
-    val listing: PropertyListing,
+    val listing: ListingSummary,
     val user: User,
     val agent: User,
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
+    val date: String
 )

@@ -3,6 +3,7 @@ package com.plugins
 import com.*
 import com.data.models.activity.ActivityDataSource
 import com.data.models.agency.AgencyDataSource
+import com.data.models.appointment.AppointmentDataSource
 import com.data.models.image.ImageDataSource
 import com.data.models.offer.OfferDataSource
 import com.data.models.propertylisting.PropertyListingDataSource
@@ -27,6 +28,7 @@ fun Application.configureRouting(
     propertyListingDataSource: PropertyListingDataSource,
     activityDataSource: ActivityDataSource,
     offerDataSource : OfferDataSource,
+    appointmentDataSource: AppointmentDataSource,
 ) {
 
 
@@ -34,6 +36,13 @@ fun Application.configureRouting(
         offerRouting(
             offerDataSource,
             userDataSource,
+            propertyListingDataSource,
+            activityDataSource,
+        )
+        appointmentRouting(
+            appointmentDataSource,
+            userDataSource,
+            mailerSendService,
             propertyListingDataSource,
             activityDataSource,
         )

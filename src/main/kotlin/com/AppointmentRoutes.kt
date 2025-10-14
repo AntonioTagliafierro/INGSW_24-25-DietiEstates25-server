@@ -1,11 +1,19 @@
 package com
 
+import com.data.models.activity.Activity
+import com.data.models.activity.ActivityDataSource
+import com.data.models.activity.ActivityType
 import com.data.models.appointment.Appointment
 import com.data.models.appointment.AppointmentDataSource
 import com.data.models.appointment.AppointmentMessage
+import com.data.models.appointment.AppointmentStatus
+import com.data.models.propertylisting.PropertyListingDataSource
+import com.data.models.user.UserDataSource
 import com.data.requests.AppointmentMessageRequest
 import com.data.requests.AppointmentRequest
+import com.service.mailservice.MailerSendService
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpStatusCode.Companion.Accepted
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -13,43 +21,62 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
+import jdk.internal.agent.resources.agent
+
+fun Route.appointmentRouting(
+    appointmentDataSource: AppointmentDataSource,
+    userDataSource: UserDataSource,
+    mailerSendService: MailerSendService,
+    listingDataSource: PropertyListingDataSource,
+    activityDataSource: ActivityDataSource
+) {
+    route("/appointments") {
 
 
-
-fun Route.appointmentRoutes(
-    appointmentDataSource: AppointmentDataSource
-){
-    route("/appointments"){
 
         post("/bookappointment") {
-            val request = kotlin.runCatching { call.receiveNullable<AppointmentRequest>() }.getOrNull() ?: run {
+            val request = call.receiveNullable<AppointmentRequest>() ?: run {
                 call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
                 return@post
             }
 
+            // Creazione dell'appuntamento
             val appointment = Appointment(
                 listing = request.listing,
                 user = request.user,
-                agent = request.user,
+                agent = request.agent,
                 date = request.date
             )
 
-            val firstMessage = AppointmentMessage(
-                senderId = request.user.id.toString(),
+
+            // Primo messaggio dell'appuntamento
+            val message = AppointmentMessage(
+                senderName = request.user.username, // usa direttamente request.user
                 timestamp = System.currentTimeMillis(),
                 date = request.date,
-                accepted = null
+                status = AppointmentStatus.PENDING
             )
 
-            val wasAcknowledged = appointmentDataSource.createAppointemnt(appointment, firstMessage)
-            if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'appuntamento")
-                return@post
+            // Salvataggio nel database
+            val wasCreated = appointmentDataSource.createAppointemnt(appointment, message)
+            if (wasCreated) {
+                // Invia email
+                val result = mailerSendService.sendAppointmentEmail(
+                    request.user,
+                    request.agent,
+                    request.listing,
+                    appointment
+                )
+
+                if (result.status == Accepted) {
+                    call.respond(HttpStatusCode.Created, appointment)
+                } else {
+                    call.respond(HttpStatusCode.InternalServerError, "Errore invio email")
+                }
+            } else {
+                call.respond(HttpStatusCode.InternalServerError, "Errore creazione appuntamento")
             }
-
-            call.respond(HttpStatusCode.OK, appointment)
         }
-
 
         post("/message") {
             val request = runCatching { call.receiveNullable<AppointmentMessageRequest>() }.getOrNull() ?: run {
@@ -58,10 +85,10 @@ fun Route.appointmentRoutes(
             }
 
             val newMessage = AppointmentMessage(
-                senderId = request.senderId,
+                senderName = request.senderId,
                 timestamp = System.currentTimeMillis(),
-                date = request.date,
-                accepted = null
+                date = request.date.toString(),
+                status = AppointmentStatus.PENDING
             )
 
             val success = appointmentDataSource.addAppointmentMessage(request.appointmentId, newMessage)
@@ -87,7 +114,29 @@ fun Route.appointmentRoutes(
                 return@post
             }
 
-            call.respond(HttpStatusCode.OK, "Appuntamento $appointmentId accettato con successo")
+            val appointment = appointmentDataSource.getAppointment(appointmentId)
+
+            if (!listingDataSource.acceptListing(appointment!!.listing.id.toString())) {
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'update del listing ${appointment.listing.id}")
+                return@post
+            }
+
+            val acceptedUser =
+                if (appointment.messages.last().senderName != appointment.user.name) appointment.user.name else appointment.agent.name
+
+            if (activityDataSource.insertActivity(
+                    Activity(
+                        userId = userDataSource.getUserByUsername(acceptedUser!!)!!.id.toString(),
+                        type = ActivityType.ACCEPTED,
+                        text = "You Accepted the appointment on ${appointment.messages.last().date}"
+                    )
+                )
+            ) {
+                call.respond(HttpStatusCode.OK, "Appuntamento $appointmentId accettato con successo")
+            } else {
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
+                return@post
+            }
         }
 
         post("/decline") {
@@ -104,12 +153,38 @@ fun Route.appointmentRoutes(
                 return@post
             }
 
-            call.respond(HttpStatusCode.OK, "Appuntamento $appointmentId rifiutato con successo")
+            val appointment = appointmentDataSource.getAppointment(appointmentId)
+
+
+            val declinedUser =
+                if (appointment?.messages?.last()?.senderName != appointment?.user?.name) appointment?.user?.name else appointment?.agent?.name
+
+            if (activityDataSource.insertActivity(
+                    Activity(
+                        userId = userDataSource.getUserByUsername(declinedUser!!)!!.id.toString(),
+                        type = ActivityType.ACCEPTED,
+                        text = "You declined the appointment on ${appointment?.messages?.last()?.date}"
+                    )
+                )
+            ) {
+                call.respond(HttpStatusCode.OK, "Appuntamento $appointmentId accettato con successo")
+            } else {
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
+                return@post
+            }
         }
 
-        get("/all") {
+        get("/summary") {
+            val propertyId = call.request.queryParameters["propertyId"]
+
+            if (propertyId.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Parametro propertyId mancante")
+                return@get
+            }
+
             try {
-                val summaries = appointmentDataSource.getAllAppointments()
+                val summaries = appointmentDataSource.getSummaryAppointments(propertyId)
+
                 call.respond(HttpStatusCode.OK, summaries)
             } catch (e: Exception) {
                 call.respond(
@@ -117,9 +192,10 @@ fun Route.appointmentRoutes(
                     "Errore durante il recupero dello storico globale: ${e.localizedMessage}"
                 )
             }
+
         }
 
-        get ("byUser"){
+        get("byUser") {
             val userId = call.request.queryParameters["userId"]
 
             if (userId.isNullOrBlank()) {
@@ -137,26 +213,6 @@ fun Route.appointmentRoutes(
                 )
             }
         }
-
-        get("/byListing") {
-            val listingId = call.request.queryParameters["listingId"]
-
-            if (listingId.isNullOrBlank()) {
-                call.respond(HttpStatusCode.BadRequest, "Parametro listingId mancante")
-                return@get
-            }
-
-            try {
-                val appointments = appointmentDataSource.getAppointmentByListingId(listingId)
-                call.respond(HttpStatusCode.OK, appointments)
-            } catch (e: Exception) {
-                call.respond(
-                    HttpStatusCode.InternalServerError,
-                    "Errore durante il recupero appuntamenti per listingId=$listingId: ${e.localizedMessage}"
-                )
-            }
-        }
-
 
 
     }

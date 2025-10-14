@@ -1,5 +1,6 @@
 package com.data.models.appointment
 
+import com.data.models.propertylisting.ListingSummary
 import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.User
 import com.security.serializer.ObjectIdSerializer
@@ -14,11 +15,10 @@ import java.time.LocalDate
 data class Appointment(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    val listing: PropertyListing,
+    val listing: ListingSummary,
     val user: User,
     val agent: User,
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
+    val date: String,
     val status: AppointmentStatus = AppointmentStatus.PENDING,
     val messages: MutableList<AppointmentMessage> = mutableListOf()
 )
@@ -37,18 +37,15 @@ enum class AppointmentStatus {
 data class AppointmentMessage(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    val senderId: String,
+    val senderName: String,
     val timestamp: Long,
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
-    val accepted: Boolean? = null,
-    val text: String? = null
+    val date: String,
+    val status: AppointmentStatus
 )
 
 @Serializable
 data class AppointmentSummary(
-    @Serializable(with = LocalDateSerializer::class)
-    val date: LocalDate,
-    val status: Boolean?
+    val date: String,
+    val status: AppointmentStatus
 )
 
