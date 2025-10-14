@@ -42,6 +42,7 @@ fun Application.configureRouting(
         appointmentRouting(
             appointmentDataSource,
             userDataSource,
+            mailerSendService,
             propertyListingDataSource,
             activityDataSource,
         )

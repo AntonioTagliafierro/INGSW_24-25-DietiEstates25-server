@@ -1,6 +1,7 @@
 package com.service.mailservice
 
 import com.data.models.appointment.Appointment
+import com.data.models.propertylisting.ListingSummary
 import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.User
 import io.ktor.client.*
@@ -19,13 +20,13 @@ class MailerSendService(
     suspend fun sendAppointmentEmail(
         user: User,
         agent: User,
-        listing: PropertyListing,
+        listing: ListingSummary,
         appointment: Appointment
     ): HttpResponse {
         val subject = "Welcome to My App"
-        val userName: String = user.name!!
+        val userUsername: String = user.username
         val agentEmail: String = "antonio.tagliafierro1998@gmail.com" // perché API gratuita manda email solo all'email dell'account
-        val agentName: String = agent.name!!
+        val agentUsername: String = agent.username
         val title: String = listing.title
         val address: String = listing.property.city + " " + listing.property.street + " " + listing.property.civicNumber
         val date: String = appointment.date
@@ -33,8 +34,8 @@ class MailerSendService(
         val personalization = EmailRequest.CustomPersonalization(
             email = agentEmail,
             data = mapOf(
-                "name" to userName,
-                "agentName" to agentName,
+                "name" to userUsername,
+                "agentName" to agentUsername,
                 "title" to title,
                 "address" to address,
                 "date" to date,
@@ -50,7 +51,7 @@ class MailerSendService(
             to = listOf(
                 EmailRequest.Recipient(
                     email = agentEmail,
-                    name = agentName
+                    name = agentUsername
                 )
             ),
             subject = subject,

@@ -23,6 +23,13 @@ data class PropertyListing(
 )
 
 @Serializable
+data class ListingSummary(
+    val id: String,
+    val title: String,
+    val property: PropertySummary,
+)
+
+@Serializable
 enum class Type(val label: String) {
     @SerialName("Rent")
     RENT("Rent"),
@@ -73,6 +80,13 @@ data class Property(
 ) {
     val location: GeoLocation = GeoLocation(coordinates = listOf(longitude, latitude))
 }
+
+@Serializable
+data class PropertySummary(
+    val city: String,
+    val street: String,
+    val civicNumber: String
+)
 
 @Serializable
 enum class EnergyClass(val label: String) {

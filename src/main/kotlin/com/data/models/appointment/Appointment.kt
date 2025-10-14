@@ -1,5 +1,6 @@
 package com.data.models.appointment
 
+import com.data.models.propertylisting.ListingSummary
 import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.User
 import com.security.serializer.ObjectIdSerializer
@@ -14,7 +15,7 @@ import java.time.LocalDate
 data class Appointment(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    val listing: PropertyListing,
+    val listing: ListingSummary,
     val user: User,
     val agent: User,
     val date: String,

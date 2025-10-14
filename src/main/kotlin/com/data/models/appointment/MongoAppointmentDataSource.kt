@@ -22,7 +22,7 @@ class MongoAppointmentDataSource (
         return try {
             val appointmentToInsert = appointment.copy(messages = mutableListOf(firstMessage))
             val result = appointments.insertOne(appointmentToInsert)
-            println("Offerta creata: $appointmentToInsert")
+            println("Appuntamento creata: $appointmentToInsert")
             result.wasAcknowledged()
         } catch (e: Exception) {
             println("Errore durante la creazione dell'appuntamento: ${e.localizedMessage}")
