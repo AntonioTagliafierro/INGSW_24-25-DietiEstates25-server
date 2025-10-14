@@ -72,34 +72,27 @@ fun Route.offerRouting(
                 return@post
             }
 
-            val newMessage = if(request.isAgent) {
+            val newMessage =
                 OfferMessage(
-                    senderName = request.agentName,
+                    sender = request.buyerUser,
                     timestamp = System.currentTimeMillis(),
                     amount = request.amount,
                     status = OfferStatus.PENDING,
                 )
-            }else{
-                OfferMessage(
-                    senderName = request.buyerName,
-                    timestamp = System.currentTimeMillis(),
-                    amount = request.amount,
-                    status = OfferStatus.PENDING,
-                )
-            }
+
 
             val existingOffer = offerDataSource.getOffer(
-                propertyId = request.propertyId,
-                buyerName = request.buyerName
+                propertyId = request.property.id.toString(),
+                buyerName = request.buyerUser.username
             )
 
 
             if (existingOffer == null) {
 
                 val newOffer = Offer(
-                    propertyId = request.propertyId,
-                    buyerName = request.buyerName,
-                    agentName = request.agentName,
+                    listing = request.property,
+                    buyerUser = request.buyerUser,
+                    agentUser = request.agent,
                     messages = mutableListOf(newMessage)
                 )
 
@@ -119,18 +112,17 @@ fun Route.offerRouting(
                 
             }
 
-            val listingProperty = listingDataSource.getListingById(request.propertyId)
 
             if ( activityDataSource.insertActivity(
                     Activity(
-                        userId = userDataSource.getUserByUsername(newMessage.senderName)!!.id.toString(),
+                        userId = userDataSource.getUserByUsername(newMessage.sender.username)!!.id.toString(),
                         type = if( existingOffer == null )ActivityType.INSERT else ActivityType.OFFERED,
-                        text =  if( existingOffer == null ) "You inserted a listing on ${listingProperty!!.property.street}" else "You Offered ${newMessage.amount} of the listing on ${listingProperty!!.property.street}"
+                        text =  if( existingOffer == null ) "You inserted a listing on ${request.property.property.street}" else "You Offered ${newMessage.amount} of the listing on ${request.property.property.street}"
                     )
             )){
                 val updatedOffer = offerDataSource.getOffer(
-                    propertyId = request.propertyId,
-                    buyerName = request.buyerName
+                    propertyId = request.property.id.toString(),
+                    buyerName = request.buyerUser.username
                 )
 
                 call.respond(HttpStatusCode.Created, updatedOffer ?: newMessage)
@@ -149,7 +141,7 @@ fun Route.offerRouting(
             }
 
             val newMessage = OfferMessage(
-                senderName = request.senderId,
+                sender = request.sender,
                 timestamp = System.currentTimeMillis(),
                 amount = request.amount,
                 status = OfferStatus.PENDING,
@@ -180,18 +172,25 @@ fun Route.offerRouting(
 
             val offer = offerDataSource.getOffer(offerId)
 
-            if ( !listingDataSource.acceptListing(offer!!.propertyId) ) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'update del listing ${offer.propertyId}")
+            if ( !listingDataSource.acceptListing(offer!!.id.toString()) ) {
+                call.respond(HttpStatusCode.Conflict, "Errore durante l'update del listing ${offer.id}")
                 return@post
             }
+            var proposedUser  = offer.agentUser
 
-            val acceptedUser = if ( offer.messages.last().senderName != offer.buyerName) offer.buyerName else offer.agentName
+            val acceptedUser = if ( offer.messages.last().sender.username != offer.buyerUser.username){
+                proposedUser = offer.agentUser
+                offer.buyerUser
+            } else {
+                proposedUser = offer.buyerUser
+                offer.agentUser
+            }
 
             if ( activityDataSource.insertActivity(
                     Activity(
-                        userId = userDataSource.getUserByUsername(acceptedUser)!!.id.toString(),
+                        userId = acceptedUser.id.toString(),
                         type = ActivityType.ACCEPTED,
-                        text = "You Accepted the offer with an amount of ${offer.messages.last().amount}"
+                        text = "You Accepted the offer that proposed ${proposedUser.username} with an amount of ${offer.messages.last().amount}"
                     )
                 )){
                 call.respond(HttpStatusCode.OK, "Offerta $offerId accettata con successo")
@@ -216,13 +215,22 @@ fun Route.offerRouting(
             }
 
             val offer = offerDataSource.getOffer(offerId)
-            val declinedUser = if ( offer!!.messages.last().senderName != offer.buyerName) offer.buyerName else offer.agentName
+
+            var proposedUser  = offer!!.buyerUser
+
+            val declinedUser = if ( offer.messages.last().sender.username != offer.buyerUser.username){
+                proposedUser = offer.agentUser
+                offer.buyerUser
+            } else {
+                proposedUser = offer.buyerUser
+                offer.agentUser
+            }
 
             if ( activityDataSource.insertActivity(
                     Activity(
-                        userId = userDataSource.getUserByUsername(declinedUser)!!.id.toString(),
+                        userId = declinedUser.id.toString(),
                         type = ActivityType.DECLINED,
-                        text = "You declined the offer with an amount of ${offer.messages.last().amount}"
+                        text = "You declined the offer  that proposed ${proposedUser.username} with an amount of ${offer.messages.last().amount}"
                     )
                 )){
                 call.respond(HttpStatusCode.OK, "Offerta $offerId rifiutata con successo")

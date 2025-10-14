@@ -1,5 +1,7 @@
 package com.data.models.offer
 
+import com.data.models.propertylisting.PropertyListing
+import com.data.models.user.User
 import com.security.serializer.ObjectIdSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -9,17 +11,17 @@ import org.bson.types.ObjectId
 data class Offer(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    val propertyId: String,
-    val buyerName: String,
-    val agentName: String,
-    val messages: MutableList<OfferMessage> = mutableListOf()
+    val listing : PropertyListing,
+    val buyerUser: User,
+    val agentUser: User,
+    val messages: MutableList<OfferMessage> = mutableListOf(),
 )
 
 @Serializable
 data class OfferMessage(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    val senderName: String,
+    val sender: User,
     val timestamp: Long,
     val amount: Double?,
     val status: OfferStatus // null = idle, true = accettata, false = rifiutata
@@ -38,5 +40,6 @@ enum class OfferStatus {
 @Serializable
 data class OfferSummary(
     val amount: Double?,
+    val timestamp: Long,
     val status: OfferStatus
 )

@@ -122,7 +122,11 @@ class MongoOfferDataSource (
 
             val summaries = offerSummaryById.flatMap { offer ->
                 offer.messages.map { msg ->
-                    OfferSummary(amount = msg.amount, status = msg.status)
+                    OfferSummary(
+                        amount = msg.amount,
+                        status = msg.status,
+                        timestamp = msg.timestamp,
+                    )
                 }
             }
 
