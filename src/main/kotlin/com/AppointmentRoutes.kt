@@ -9,9 +9,12 @@ import com.data.models.appointment.AppointmentMessage
 import com.data.models.appointment.AppointmentStatus
 import com.data.models.propertylisting.PropertyListingDataSource
 import com.data.models.user.UserDataSource
+import com.data.models.user.myToLowerCase
 import com.data.requests.AppointmentMessageRequest
 import com.data.requests.AppointmentRequest
+import com.service.mailservice.MailerSendService
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.HttpStatusCode.Companion.Accepted
 import io.ktor.server.request.receiveNullable
 import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
@@ -20,15 +23,14 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 
 
-
-
 fun Route.appointmentRouting(
     appointmentDataSource: AppointmentDataSource,
     userDataSource: UserDataSource,
+    mailerSendService: MailerSendService,
     listingDataSource: PropertyListingDataSource,
     activityDataSource: ActivityDataSource
-){
-    route("/appointments"){
+) {
+    route("/appointments") {
 
 //        post("/bookappointment") {
 //            val request = kotlin.runCatching { call.receiveNullable<AppointmentRequest>() }.getOrNull() ?: run {
@@ -135,9 +137,12 @@ fun Route.appointmentRouting(
             )
 
             val wasCreated = appointmentDataSource.createAppointemnt(appointment, message)
-            if (wasCreated)
-                call.respond(HttpStatusCode.Created, appointment)
-            else
+            if (wasCreated) {
+                val result = mailerSendService.sendAppointmentEmail(user, agent, listing, appointment)
+                if (result.status == Accepted) {
+                    call.respond(HttpStatusCode.Created, appointment)
+                }
+            } else
                 call.respond(HttpStatusCode.InternalServerError, "Errore creazione appuntamento")
         }
 
@@ -179,22 +184,24 @@ fun Route.appointmentRouting(
 
             val appointment = appointmentDataSource.getAppointment(appointmentId)
 
-            if ( !listingDataSource.acceptListing(appointment!!.listing.id.toString()) ) {
+            if (!listingDataSource.acceptListing(appointment!!.listing.id.toString())) {
                 call.respond(HttpStatusCode.Conflict, "Errore durante l'update del listing ${appointment.listing.id}")
                 return@post
             }
 
-            val acceptedUser = if ( appointment.messages.last().senderName != appointment.user.name) appointment.user.name else appointment.agent.name
+            val acceptedUser =
+                if (appointment.messages.last().senderName != appointment.user.name) appointment.user.name else appointment.agent.name
 
-            if ( activityDataSource.insertActivity(
+            if (activityDataSource.insertActivity(
                     Activity(
                         userId = userDataSource.getUserByUsername(acceptedUser!!)!!.id.toString(),
                         type = ActivityType.ACCEPTED,
                         text = "You Accepted the appointment on ${appointment.messages.last().date}"
                     )
-                )){
+                )
+            ) {
                 call.respond(HttpStatusCode.OK, "Appuntamento $appointmentId accettato con successo")
-            }else{
+            } else {
                 call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
                 return@post
             }
@@ -217,23 +224,25 @@ fun Route.appointmentRouting(
             val appointment = appointmentDataSource.getAppointment(appointmentId)
 
 
-            val declinedUser = if ( appointment?.messages?.last()?.senderName != appointment?.user?.name) appointment?.user?.name else appointment?.agent?.name
+            val declinedUser =
+                if (appointment?.messages?.last()?.senderName != appointment?.user?.name) appointment?.user?.name else appointment?.agent?.name
 
-            if ( activityDataSource.insertActivity(
+            if (activityDataSource.insertActivity(
                     Activity(
                         userId = userDataSource.getUserByUsername(declinedUser!!)!!.id.toString(),
                         type = ActivityType.ACCEPTED,
                         text = "You declined the appointment on ${appointment?.messages?.last()?.date}"
                     )
-                )){
+                )
+            ) {
                 call.respond(HttpStatusCode.OK, "Appuntamento $appointmentId accettato con successo")
-            }else{
+            } else {
                 call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
                 return@post
             }
         }
 
-        get("/summary"){
+        get("/summary") {
             val propertyId = call.request.queryParameters["propertyId"]
 
             if (propertyId.isNullOrBlank()) {
@@ -254,7 +263,7 @@ fun Route.appointmentRouting(
 
         }
 
-        get ("byUser"){
+        get("byUser") {
             val userId = call.request.queryParameters["userId"]
 
             if (userId.isNullOrBlank()) {
@@ -272,9 +281,6 @@ fun Route.appointmentRouting(
                 )
             }
         }
-
-
-
 
 
     }
