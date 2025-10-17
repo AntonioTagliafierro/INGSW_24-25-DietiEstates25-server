@@ -179,5 +179,46 @@ class MongoAppointmentDataSource (
         }
     }
 
+    override suspend fun getAppointmentsByListing(listingId: String): List<Appointment> {
+        return try {
+            val result = appointments.find(
+                Filters.eq("listing.id", listingId)
+            ).toList()
+
+            if (result.isEmpty()) {
+                println("Nessun appuntamento trovato per listing $listingId")
+            } else {
+                println("Recuperati ${result.size} appuntamenti per listing $listingId")
+            }
+
+            result
+        } catch (e: Exception) {
+            println("Errore durante il recupero degli appuntamenti per listing $listingId: ${e.localizedMessage}")
+            emptyList()
+        }
+    }
+
+    override suspend fun getAppointmentsByUserAndListing(userId: String, listingId: String): List<Appointment> {
+        return try {
+            val result = appointments.find(
+                Filters.and(
+                    Filters.eq("listing.id", listingId),
+                    Filters.eq("user.id", userId)
+                )
+            ).toList()
+
+            if (result.isEmpty()) {
+                println("Nessun appuntamento trovato per user $userId e listing $listingId")
+            } else {
+                println("Recuperati ${result.size} appuntamenti per user $userId e listing $listingId")
+            }
+
+            result
+        } catch (e: Exception) {
+            println("Errore durante il recupero appuntamenti per user $userId e listing $listingId: ${e.localizedMessage}")
+            emptyList()
+        }
+    }
+
 
 }

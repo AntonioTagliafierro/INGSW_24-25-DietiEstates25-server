@@ -1,9 +1,5 @@
 package com.data.requests
 
-import com.data.models.propertylisting.EnergyClass
-import com.data.models.propertylisting.Property
-import com.data.models.propertylisting.PropertyListing
-import com.data.models.propertylisting.Type
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
 import com.data.models.user.User
@@ -48,7 +44,7 @@ data class PropertyRequest(
     val airConditioning: Boolean,
     val heatingSystem: Boolean,
     val description: String,
-    val propertyPicture: String? = null
+    val images: List<String>? = null
 )
 
 fun String.toType(): com.data.models.propertylisting.Type =
@@ -93,7 +89,7 @@ fun PropertyRequest.toEntity(): com.data.models.propertylisting.Property {
         airConditioning = this.airConditioning,
         heatingSystem = this.heatingSystem,
         description = this.description,
-        propertyPicture = this.propertyPicture,
+        images = this.images
 
         )
 }

@@ -52,7 +52,7 @@ class Mappers {
             airConditioning = this.airConditioning,
             heatingSystem = this.heatingSystem,
             description = this.description,
-            propertyPicture = this.propertyPicture
+            images = this.images
         )
     }
 

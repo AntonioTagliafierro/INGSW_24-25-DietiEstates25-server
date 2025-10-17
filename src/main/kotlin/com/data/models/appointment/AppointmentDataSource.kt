@@ -11,6 +11,7 @@ interface AppointmentDataSource {
     suspend fun getAppointment(propertyId: String , buyerName: String): Appointment?
     suspend fun getAppointment(propertyId: String): Appointment?
     suspend fun getSummaryAppointments(propertyId :String): List<AppointmentSummary>
-
+    suspend fun getAppointmentsByListing(listingId: String): List<Appointment>
+    suspend fun getAppointmentsByUserAndListing(userId: String, listingId: String): List<Appointment>
 
 }

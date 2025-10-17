@@ -37,7 +37,7 @@ enum class AppointmentStatus {
 data class AppointmentMessage(
     @Serializable(with = ObjectIdSerializer::class)
     val id: ObjectId = ObjectId.get(),
-    val senderName: String,
+    val sender: User,
     val timestamp: Long,
     val date: String,
     val status: AppointmentStatus

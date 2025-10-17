@@ -20,6 +20,7 @@ import com.plugins.configureMonitoring
 import com.plugins.configureSecurity
 import com.plugins.configureSerialization
 import com.plugins.*
+import com.routes.imageContainerRoutes
 import com.security.token.GitHubOAuthService
 import com.service.GeoapifyService
 import com.service.mailservice.MailerSendService
@@ -29,7 +30,10 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.jackson.*
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.http.content.files
+import io.ktor.server.http.content.static
 import io.ktor.server.netty.*
+import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
 
 
@@ -48,7 +52,6 @@ fun Application.module() {
     val activityDataSource = MongoActivityDataSource(database)
     val propertyListingCollection = database.getCollection<PropertyListing>("propertyListings")
     val appointmentDataSource = MongoAppointmentDataSource(database)
-
 
     val tokenService = JwtTokenService()
     val tokenConfig = TokenConfig(
@@ -79,7 +82,6 @@ fun Application.module() {
         }
     }
 
-
     val mailerSendService = MailerSendService(
         token = System.getenv("MAILERSEND_TOKEN"),
         baseUrl = System.getenv("MAILERSEND_BASE_URL"),
@@ -91,56 +93,59 @@ fun Application.module() {
         httpClient = sharedHttpClient
     )
 
-    // PropertyListing
     val propertyListingDataSource = MongoPropertyListingDataSource(
         collection = propertyListingCollection,
         geoapifyService = geoapifyService,
         imageDataSource = imageDataSource
     )
 
-
-
-
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID"),
         clientSecret = System.getenv("GITHUB_CLIENT_SECRET"),
-        redirectUri = "http://10.0.2.2:8080//callback/github",
+        redirectUri = "http://10.0.2.2:8080/callback/github",
         httpClient = sharedHttpClient
     )
 
-    configureSerialization()
+    // Base URL del server, necessario per creare URL immagini
+    val baseUrl = "http://10.0.2.2:8080"
 
+    // Configurazione serializzazione e sicurezza
+    configureSerialization()
     configureSecurity(tokenConfig)
 
-    configureRouting(
-        mailerSendService,
-        agencyDataSource,
-        userDataSource,
-        hashingService,
-        tokenService,
-        tokenConfig,
-        gitHubOAuthService,
-        imageDataSource,
-        propertyListingDataSource,
-        activityDataSource,
-        offerDataSource,
-        appointmentDataSource
-    )
+    // Configurazione static files per immagini
+    routing {
+        static("/uploads/images") {
+            files("uploads/images")
+        }
+    }
+
+    // Configurazione routing principale
+    routing {
+        imageContainerRoutes(baseUrl)
+        configureRouting(
+            mailerSendService,
+            agencyDataSource,
+            userDataSource,
+            hashingService,
+            tokenService,
+            tokenConfig,
+            gitHubOAuthService,
+            imageDataSource,
+            propertyListingDataSource,
+            activityDataSource,
+            offerDataSource,
+            appointmentDataSource
+        )
+    }
 
     configureMonitoring()
-
-
 }
 
 fun getDatabase(): MongoDatabase {
-    val mongoPw = System.getenv("MONGO_PW")
-
     val settings = MongoClientSettings.builder()
         .applyConnectionString(ConnectionString("mongodb://localhost:27017")).build()
     val client = MongoClient.create(settings)
-    val database = client.getDatabase("immobiliDB")
-
-
-    return database
+    return client.getDatabase("immobiliDB")
 }
 

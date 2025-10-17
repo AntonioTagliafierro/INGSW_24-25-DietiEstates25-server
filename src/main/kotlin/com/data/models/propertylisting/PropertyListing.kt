@@ -75,7 +75,7 @@ data class Property(
     val description: String,
     val propertyPicture: String? = null,
     val pois: List<POI> = emptyList(),
-    val images: List<String> = emptyList()
+    val images: List<String>? = emptyList()
 ) {
     val location: GeoLocation = GeoLocation(coordinates = listOf(longitude, latitude))
 }

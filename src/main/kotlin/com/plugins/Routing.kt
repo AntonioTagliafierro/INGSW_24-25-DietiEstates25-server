@@ -1,6 +1,5 @@
 package com.plugins
 
-import com.*
 import com.data.models.activity.ActivityDataSource
 import com.data.models.agency.AgencyDataSource
 import com.data.models.appointment.AppointmentDataSource
@@ -8,6 +7,18 @@ import com.data.models.image.ImageDataSource
 import com.data.models.offer.OfferDataSource
 import com.data.models.propertylisting.PropertyListingDataSource
 import com.data.models.user.UserDataSource
+import com.routes.admin
+import com.routes.agencyRequests
+import com.routes.appointmentRouting
+import com.routes.authenticate
+import com.routes.getSecretInfo
+import com.routes.githubAuthVerification
+import com.routes.imageRoutes
+import com.routes.offerRouting
+import com.routes.profileRoutes
+import com.routes.propertyListingRoutes
+import com.routes.state
+import com.routes.userAuth
 import com.security.hashing.HashingService
 import com.security.token.GitHubOAuthService
 import com.security.token.TokenConfig
