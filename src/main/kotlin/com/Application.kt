@@ -32,9 +32,11 @@ import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.http.content.files
 import io.ktor.server.http.content.static
+import io.ktor.server.http.content.staticFiles
 import io.ktor.server.netty.*
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.runBlocking
+import java.io.File
 
 
 fun main(args: Array<String>) {
@@ -115,9 +117,8 @@ fun Application.module() {
 
     // Configurazione static files per immagini
     routing {
-        static("/uploads/images") {
-            files("uploads/images")
-        }
+        // Serve tutte le sottocartelle sotto "uploads"
+        staticFiles("/uploads", File("uploads"))
     }
 
     // Configurazione routing principale

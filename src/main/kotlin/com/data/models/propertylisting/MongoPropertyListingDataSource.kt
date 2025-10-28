@@ -7,10 +7,12 @@ import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoCollection
 import com.service.GeoapifyService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withContext
 import org.bson.Document
 import org.bson.conversions.Bson
+
 
 class MongoPropertyListingDataSource(
     private val collection: MongoCollection<PropertyListing>,
@@ -18,9 +20,7 @@ class MongoPropertyListingDataSource(
     private val imageDataSource: MongoImageDataSource
 ) : PropertyListingDataSource {
 
-
     override suspend fun insertListing(listing: PropertyListing): Boolean = withContext(Dispatchers.IO) {
-
         try {
             val pois = geoapifyService.getPOIs(listing.property.latitude, listing.property.longitude)
             val listingWithPois = listing.copy(property = listing.property.copy(pois = pois))
@@ -38,33 +38,19 @@ class MongoPropertyListingDataSource(
                 Filters.eq("id", propertyId),
                 Updates.set("available", false)
             )
-
             result.matchedCount > 0 && result.modifiedCount > 0
-
         } catch (e: Exception) {
             e.printStackTrace()
             false
         }
     }
 
-
-    override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {
-        val allIds = listings.map { it.id.toString() }
-        val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
-
-        println(" Trovati ${listings.size} documenti in MongoDB")
-
-        return listings.map { listing ->
-            val images = imagesMap[listing.id.toString()] ?: emptyList()
-            listing.copy(property = listing.property.copy(images = images))
-
-        }
-    }
-
+    // 🔹 Metodo ora usa direttamente la collection (immagini non più allegate automaticamente)
     override suspend fun getAllListings(): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
             val listings = collection.find().toList()
-            attachImagesToListings(listings)
+            // return attachImagesToListings(listings)
+            listings
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
@@ -74,19 +60,19 @@ class MongoPropertyListingDataSource(
     override suspend fun getListingsByEmail(email: String): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
             val listings = collection.find(Filters.eq("agent.email", email.myToLowerCase())).toList()
-            attachImagesToListings(listings)
+            // return attachImagesToListings(listings)
+            listings
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-
-    override suspend fun getListingById( id : String ): PropertyListing?{
+    override suspend fun getListingById(id: String): PropertyListing? {
         return try {
-            val listing = collection.find(Filters.eq("id", id))
-            attachImagesToListings(listing.toList()).firstOrNull()
-
+            val listing = collection.find(Filters.eq("id", id)).firstOrNull()
+            // attachImagesToListings(listOfNotNull(listing)).firstOrNull()
+            listing
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -98,9 +84,7 @@ class MongoPropertyListingDataSource(
         lon: Double,
         radius: Int
     ): List<PropertyListing> = withContext(Dispatchers.IO) {
-
         try {
-            // Filtro geospaziale con Document
             val filter = Document(
                 "property.location",
                 Document(
@@ -126,12 +110,13 @@ class MongoPropertyListingDataSource(
                 val listings = collection.find(
                     Filters.and(
                         Filters.eq("type", type),
-                        Filters.eq("property.city", city) //  campo annidato
+                        Filters.eq("property.city", city)
                     )
                 ).toList()
 
-                println(" Trovati ${listings.size} documenti in MongoDB")
-                attachImagesToListings(listings)
+                println("Trovati ${listings.size} documenti in MongoDB")
+                // return attachImagesToListings(listings)
+                listings
             } catch (e: Exception) {
                 e.printStackTrace()
                 emptyList()
@@ -147,7 +132,18 @@ class MongoPropertyListingDataSource(
         }
     }
 
+    /*
+    // 🔹 Funzione lasciata commentata per futuro riuso
+    override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {
+        val allIds = listings.map { it.id.toString() }
+        val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
 
+        println("Trovati ${listings.size} documenti in MongoDB")
 
-
+        return listings.map { listing ->
+            val images = imagesMap[listing.id.toString()] ?: emptyList()
+            listing.copy(property = listing.property.copy(images = images))
+        }
+    }
+    */
 }

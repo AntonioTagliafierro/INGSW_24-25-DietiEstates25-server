@@ -9,9 +9,7 @@ import java.io.File
 
 fun Application.configureStaticFiles() {
     routing {
-        // Serve direttamente le immagini caricate
-        static("/uploads/images") {
-            files("uploads/images")
-        }
+        // Serve direttamente le immagini caricate (e le sottocartelle)
+        staticFiles("/uploads", File("uploads"))
     }
 }
