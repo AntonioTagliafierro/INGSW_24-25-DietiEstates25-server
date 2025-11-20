@@ -52,7 +52,7 @@ class Mappers {
             airConditioning = this.airConditioning,
             heatingSystem = this.heatingSystem,
             description = this.description,
-            images = this.images
+            images = this.images ?: emptyList()
         )
     }
 
@@ -93,7 +93,7 @@ class Mappers {
             airConditioning = this.airConditioning,
             heatingSystem = this.heatingSystem,
             description = this.description,
-            propertyPicture = this.propertyPicture,
+            images = this.images,
             pois = this.pois.map { it.toResponse() }
         )
     }

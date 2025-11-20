@@ -41,7 +41,7 @@ data class PropertyResponse(
     val airConditioning: Boolean,
     val heatingSystem: Boolean,
     val description: String,
-    val propertyPicture: String? = null,
+    val images: List<String>? = emptyList(),
     val pois: List<POI> = emptyList(),
 )
 
@@ -80,7 +80,7 @@ fun Property.toResponse(): PropertyResponse {
         airConditioning = this.airConditioning,
         heatingSystem = this.heatingSystem,
         description = this.description,
-        propertyPicture = this.propertyPicture,
+        images = this.images,
         pois = this.pois
     )
 }

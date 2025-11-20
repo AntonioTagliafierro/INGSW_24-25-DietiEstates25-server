@@ -11,7 +11,6 @@ import java.util.*
 
 fun Route.imageContainerRoutes(baseUrl: String) {
 
-    // POST per upload immagini
     post("/images/upload") {
         val multipart = call.receiveMultipart()
         val uploadedUrls = mutableListOf<String>()
@@ -20,8 +19,10 @@ fun Route.imageContainerRoutes(baseUrl: String) {
         if (!uploadDir.exists()) uploadDir.mkdirs()
 
         multipart.forEachPart { part ->
+            println("Ricevuta parte: ${part.name} - ${part::class.simpleName}")
+
             if (part is PartData.FileItem) {
-                // Determina estensione dal nome originale o dal MIME type
+                // Estensione file dal nome originale o dal contentType
                 val ext = part.originalFileName?.let { File(it).extension }
                     .takeIf { !it.isNullOrEmpty() }
                     ?: when (part.contentType?.contentSubtype?.lowercase()) {
@@ -31,23 +32,31 @@ fun Route.imageContainerRoutes(baseUrl: String) {
                         else -> "jpg"
                     }
 
+                // Se manca il nome originale, genera uno casuale
                 val fileName = "${UUID.randomUUID()}.$ext"
                 val file = File(uploadDir, fileName)
 
-                part.streamProvider().use { input ->
-                    file.outputStream().use { it.write(input.readBytes()) }
+                try {
+                    part.streamProvider().use { input ->
+                        file.outputStream().use { it.write(input.readBytes()) }
+                    }
+                    uploadedUrls.add("$baseUrl/uploads/images/listings/$fileName")
+                    println("File salvato: ${file.absolutePath}")
+                } catch (e: Exception) {
+                    println("Errore nel salvare il file: ${e.message}")
                 }
-
-                // URL completo pronto per il client
-                uploadedUrls.add("$baseUrl/uploads/images/listings/$fileName")
             }
+
             part.dispose()
         }
 
-        call.respond(HttpStatusCode.OK, uploadedUrls)
+        if (uploadedUrls.isEmpty()) {
+            call.respond(HttpStatusCode.BadRequest, "Nessun file valido inviato")
+        } else {
+            call.respond(HttpStatusCode.OK, uploadedUrls)
+        }
     }
 
-    // GET per servire un'immagine singola (opzionale, static già gestisce)
     get("/images/listings/{fileName}") {
         val fileName = call.parameters["fileName"] ?: return@get call.respond(HttpStatusCode.BadRequest)
         val file = File("uploads/images/listings/$fileName")

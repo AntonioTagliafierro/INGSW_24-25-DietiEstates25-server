@@ -89,7 +89,7 @@ fun PropertyRequest.toEntity(): com.data.models.propertylisting.Property {
         airConditioning = this.airConditioning,
         heatingSystem = this.heatingSystem,
         description = this.description,
-        images = this.images
+        images = this.images ?: emptyList()
 
         )
 }
