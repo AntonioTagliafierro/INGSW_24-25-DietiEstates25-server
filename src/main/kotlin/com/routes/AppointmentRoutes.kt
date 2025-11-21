@@ -56,7 +56,7 @@ fun Route.appointmentRouting(
             )
 
             // Salvataggio nel database
-            val wasCreated = appointmentDataSource.createAppointemnt(appointment, message)
+            val wasCreated = appointmentDataSource.createAppointment(appointment, message)
             if (wasCreated) {
                 // Invia email
                 val result = mailerSendService.sendAppointmentEmail(
@@ -114,19 +114,16 @@ fun Route.appointmentRouting(
 
             val appointment = appointmentDataSource.getAppointment(appointmentId)
 
-            if (!listingDataSource.acceptListing(appointment!!.listing.id.toString())) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'update del listing ${appointment.listing.id}")
-                return@post
-            }
+
 
             val acceptedUser =
-                if (appointment.messages.last().sender.name != appointment.user.name) appointment.user.name else appointment.agent.name
+                if (appointment?.messages?.last()?.sender?.name != appointment?.user?.name) appointment?.user?.name else appointment?.agent?.name
 
             if (activityDataSource.insertActivity(
                     Activity(
                         userId = userDataSource.getUserByUsername(acceptedUser!!)!!.id.toString(),
                         type = ActivityType.ACCEPTED,
-                        text = "You Accepted the appointment on ${appointment.messages.last().date}"
+                        text = "You Accepted the appointment on ${appointment?.messages?.last()?.date}"
                     )
                 )
             ) {
@@ -193,7 +190,7 @@ fun Route.appointmentRouting(
 
         }
 
-        get("byUser") {
+        get("byuser") {
             val userId = call.request.queryParameters["userId"]
 
             if (userId.isNullOrBlank()) {
@@ -229,6 +226,20 @@ fun Route.appointmentRouting(
                     //Solo appuntamenti di quell'utente per il dato listing
                     appointmentDataSource.getAppointmentsByUserAndListing(userId, listingId)
                 }
+
+                call.respond(HttpStatusCode.OK, appointments)
+            } catch (e: Exception) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    "Errore durante il recupero degli appuntamenti: ${e.localizedMessage}"
+                )
+            }
+        }
+
+        get("/all") {
+
+            try {
+                val appointments = appointmentDataSource.getAppointments()
 
                 call.respond(HttpStatusCode.OK, appointments)
             } catch (e: Exception) {
