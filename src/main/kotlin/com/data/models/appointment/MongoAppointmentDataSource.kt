@@ -1,8 +1,6 @@
 package com.data.models.appointment
 
-import com.data.models.offer.Offer
-import com.data.models.offer.OfferStatus
-import com.data.models.offer.OfferSummary
+
 import com.mongodb.client.model.Filters
 import com.mongodb.client.model.Updates
 import com.mongodb.kotlin.client.coroutine.MongoDatabase
@@ -15,7 +13,7 @@ class MongoAppointmentDataSource (
 ): AppointmentDataSource {
     private val appointments = db.getCollection<Appointment>("appointments")
 
-    override suspend fun createAppointemnt(
+    override suspend fun createAppointment(
         appointment: Appointment,
         firstMessage: AppointmentMessage
     ): Boolean {
@@ -97,8 +95,8 @@ class MongoAppointmentDataSource (
         return try {
             val result = appointments.find(
                 Filters.or(
-                    Filters.eq("userId", userId),
-                    Filters.eq("agentId", userId)
+                    Filters.eq("user.id", userId),
+                    Filters.eq("agent.id", userId)
                 )
             ).toList()
 
@@ -117,35 +115,17 @@ class MongoAppointmentDataSource (
 
 
 
-    override suspend fun getAppointment(propertyId: String , buyerName: String): Appointment? {
+
+
+    override suspend fun getAppointment(appointmentId: String): Appointment? {
         return try {
             val filter = Filters.and(
-                Filters.eq("propertyId", propertyId),
-                Filters.eq("buyerName", buyerName)
+                Filters.eq("id", appointmentId),
             )
 
             val appointment = appointments.find(filter).firstOrNull()
             if (appointment == null) {
-                println("Nessun appuntamento trovato con propertyId=$propertyId e buyerdUsername=$buyerName")
-            } else {
-                println("Appuntamento trovato: $appointment")
-            }
-            appointment
-        } catch (e: Exception) {
-            println("Errore durante la ricerca dell'appuntamento: ${e.localizedMessage}")
-            null
-        }
-    }
-
-    override suspend fun getAppointment(propertyId: String): Appointment? {
-        return try {
-            val filter = Filters.and(
-                Filters.eq("propertyId", propertyId),
-            )
-
-            val appointment = appointments.find(filter).firstOrNull()
-            if (appointment == null) {
-                println("Nessun appuntamento trovato con propertyId=$propertyId")
+                println("Nessun appuntamento trovato con Id=$appointmentId")
             } else {
                 println("Appuntamento trovato: $appointment")
             }
@@ -220,5 +200,14 @@ class MongoAppointmentDataSource (
         }
     }
 
-
+    override suspend fun getAppointments(): List<Appointment> {
+        return try {
+            val appointments = appointments.find().toList()
+            // return attachImagesToListings(listings)
+            appointments
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
 }
