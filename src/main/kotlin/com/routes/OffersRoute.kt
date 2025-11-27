@@ -124,7 +124,12 @@ fun Route.offerRouting(
                     buyerName = request.buyerUser.username
                 )
 
-                call.respond(HttpStatusCode.Created, updatedOffer ?: newMessage)
+                if (updatedOffer == null) {
+                    call.respond(HttpStatusCode.Conflict, "Errore interno: offerta creata ma non recuperabile")
+                    return@post
+                }
+
+                call.respond(HttpStatusCode.Created, updatedOffer)
             } else {
                 call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
                 return@post

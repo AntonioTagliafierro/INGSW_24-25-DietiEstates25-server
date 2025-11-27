@@ -15,8 +15,8 @@ class MongoOfferDataSource (
     override suspend fun getOffer(propertyId: String , buyerName: String): Offer? {
         return try {
             val filter = Filters.and(
-                Filters.eq("propertyId", propertyId),
-                Filters.eq("buyerName", buyerName)
+                Filters.eq("listing.id", propertyId),
+                Filters.eq("buyerUser.username", buyerName)
             )
 
             val offer = offers.find(filter).firstOrNull()
@@ -146,15 +146,13 @@ class MongoOfferDataSource (
     override suspend fun getOffers(username: String, isAgent : Boolean): List<Offer> {
         return try {
 
-            val result = if ( isAgent ) {
-                offers.find(
-                    Filters.eq("agentName", username)
-                ).toList()
-            }else{
-                offers.find(
-                    Filters.eq("buyerName", username)
-                ).toList()
+            val filter = if (isAgent) {
+                Filters.eq("agentUser.username", username)
+            } else {
+                Filters.eq("buyerUser.username", username)
             }
+
+            val result = offers.find(filter).toList()
 
             if (result.isEmpty()) {
                 println("Nessuna offerta trovata per user/agent $username")
@@ -163,11 +161,13 @@ class MongoOfferDataSource (
             }
 
             result
+
         } catch (e: Exception) {
             println("Errore durante il recupero delle offerte per user/agent $username: ${e.localizedMessage}")
             emptyList()
         }
     }
+
 
 
 }
