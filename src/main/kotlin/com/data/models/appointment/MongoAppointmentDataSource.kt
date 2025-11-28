@@ -75,17 +75,21 @@ class MongoAppointmentDataSource (
 
         val updatedMessages = appointment.messages.toMutableList()
         val lastIndex = updatedMessages.lastIndex
-        if(accepted) {
-            updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(status = AppointmentStatus.ACCEPTED)
-        }else{
-            updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(status = AppointmentStatus.REJECTED)
-        }
 
+        val newStatus = if (accepted) AppointmentStatus.ACCEPTED else AppointmentStatus.REJECTED
 
+        // Aggiorna l'ultimo messaggio
+        updatedMessages[lastIndex] = updatedMessages[lastIndex].copy(status = newStatus)
+
+        // Aggiorna sia i messaggi che lo status dell'appuntamento
         val result = appointments.updateOne(
             Filters.eq("id", appointmentId),
-            Updates.set("messages", updatedMessages)
+            Updates.combine(
+                Updates.set("messages", updatedMessages),
+                Updates.set("status", newStatus)
+            )
         )
+
         return result.modifiedCount > 0
     }
 

@@ -81,7 +81,7 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
 
-   
 
+    implementation("io.projectreactor:reactor-core:3.6.3")
 }
 
