@@ -44,6 +44,34 @@ fun Route.offerRouting(
             }
         }
 
+        get("/singlebyuser") {
+            val propertyId = call.request.queryParameters["propertyId"]
+            val userId = call.request.queryParameters["userId"]
+
+            if (propertyId.isNullOrBlank() || userId.isNullOrBlank()) {
+                call.respond(HttpStatusCode.BadRequest, "Parametri mancanti")
+                return@get
+            }
+
+            try {
+
+                val roleUser = userDataSource.getUserById(userId)?.role?.label
+                val isAgent = if(roleUser == "LOCAL_USER"  || roleUser == "THIRDPARTY_USER") true else false
+                val offer = offerDataSource.getOfferByUser(propertyId, userId, isAgent)
+                if (offer == null) {
+                    call.respond(HttpStatusCode.NotFound, "Offerta non trovata")
+                } else {
+                    call.respond(HttpStatusCode.OK, offer)
+                }
+            } catch (e: Exception) {
+                call.respond(
+                    HttpStatusCode.InternalServerError,
+                    "Errore durante il recupero: ${e.localizedMessage}"
+                )
+            }
+        }
+
+
         get("/summary"){
             val propertyId = call.request.queryParameters["propertyId"]
 
