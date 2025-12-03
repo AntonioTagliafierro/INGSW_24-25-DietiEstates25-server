@@ -29,7 +29,7 @@ fun Route.offerRouting(
             val offerId = call.request.queryParameters["offerId"]
 
             if (offerId.isNullOrBlank()) {
-                call.respond(HttpStatusCode.BadRequest, "Parametro offerId mancante")
+                call.respond(HttpStatusCode.BadRequest, "OfferId is mising")
                 return@get
             }
 
@@ -39,7 +39,7 @@ fun Route.offerRouting(
             } catch (e: Exception) {
                 call.respond(
                     HttpStatusCode.InternalServerError,
-                    "Errore durante il recupero offerte $offerId ${e.localizedMessage}"
+                    "Error retrieving offers $offerId ${e.localizedMessage}"
                 )
             }
         }
@@ -48,7 +48,7 @@ fun Route.offerRouting(
             val propertyId = call.request.queryParameters["propertyId"]
 
             if (propertyId.isNullOrBlank()) {
-                call.respond(HttpStatusCode.BadRequest, "Parametro propertyId mancante")
+                call.respond(HttpStatusCode.BadRequest, "Missing propertyId parameter")
                 return@get
             }
 
@@ -59,7 +59,7 @@ fun Route.offerRouting(
             } catch (e: Exception) {
                 call.respond(
                     HttpStatusCode.InternalServerError,
-                    "Errore durante il recupero dello storico globale: ${e.localizedMessage}"
+                    "Error retrieving global history: ${e.localizedMessage}"
                 )
             }
 
@@ -67,7 +67,7 @@ fun Route.offerRouting(
 
         post("/makeoffer") {
             val request = runCatching { call.receiveNullable<OfferRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
                 return@post
             }
 
@@ -97,7 +97,7 @@ fun Route.offerRouting(
 
                 val wasCreated = offerDataSource.createOffer(newOffer, newMessage)
                 if (!wasCreated) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante la creazione dell'offerta")
+                    call.respond(HttpStatusCode.Conflict, "Error while creating the offer")
                     return@post
                 }
                 
@@ -105,7 +105,7 @@ fun Route.offerRouting(
 
                 val success = offerDataSource.addOfferMessage(existingOffer.id.toString(), newMessage)
                 if (!success) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento del messaggio")
+                    call.respond(HttpStatusCode.Conflict, "Error inserting the message")
                     return@post
                 }
                 
@@ -125,13 +125,13 @@ fun Route.offerRouting(
                 )
 
                 if (updatedOffer == null) {
-                    call.respond(HttpStatusCode.Conflict, "Errore interno: offerta creata ma non recuperabile")
+                    call.respond(HttpStatusCode.Conflict, "Internal error: offer created but not retrievable")
                     return@post
                 }
 
                 call.respond(HttpStatusCode.Created, updatedOffer)
             } else {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
+                call.respond(HttpStatusCode.Conflict, "Error while inserting the activity")
                 return@post
             }
 
@@ -140,7 +140,7 @@ fun Route.offerRouting(
         
         post("/message") {
             val request = runCatching { call.receiveNullable<MessageRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
                 return@post
             }
 
@@ -153,31 +153,31 @@ fun Route.offerRouting(
 
             val success = offerDataSource.addOfferMessage(request.offerId, newMessage)
             if (!success) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento del messaggio")
+                call.respond(HttpStatusCode.Conflict, "Error inserting the message")
                 return@post
             }
 
-            call.respond(HttpStatusCode.OK, "Messaggio inserito con successo")
+            call.respond(HttpStatusCode.OK, "Message posted successfully")
         }
 
         post("/accept") {
             val offerId = call.request.queryParameters["offerId"]
 
             if (offerId.isNullOrBlank()) {
-                call.respond(HttpStatusCode.BadRequest, "Parametro offerId mancante")
+                call.respond(HttpStatusCode.BadRequest, "Missing offerId parameter")
                 return@post
             }
 
             val success = offerDataSource.acceptOffer(offerId)
             if (!success) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'accettazione dell'offerta $offerId")
+                call.respond(HttpStatusCode.Conflict, "Error while accepting the offer $offerId")
                 return@post
             }
 
             val offer = offerDataSource.getOffer(offerId)
 
             if ( !listingDataSource.acceptListing(offer!!.id.toString()) ) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'update del listing ${offer.id}")
+                call.respond(HttpStatusCode.Conflict, "Error during listing update ${offer.id}")
                 return@post
             }
             var proposedUser  = offer.agentUser
@@ -197,9 +197,9 @@ fun Route.offerRouting(
                         text = "You Accepted the offer that proposed ${proposedUser.username} with an amount of ${offer.messages.last().amount}"
                     )
                 )){
-                call.respond(HttpStatusCode.OK, "Offerta $offerId accettata con successo")
+                call.respond(HttpStatusCode.OK, "Offer $offerId successfully accepted")
             }else{
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
+                call.respond(HttpStatusCode.Conflict, "Error while inserting the activity")
                 return@post
             }
         }
@@ -208,13 +208,13 @@ fun Route.offerRouting(
             val offerId = call.request.queryParameters["offerId"]
 
             if (offerId.isNullOrBlank()) {
-                call.respond(HttpStatusCode.BadRequest, "Parametro offerId mancante")
+                call.respond(HttpStatusCode.BadRequest, "Missing offerId parameter")
                 return@post
             }
 
             val success = offerDataSource.declineOffer(offerId)
             if (!success) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante il rifiuto dell'offerta $offerId")
+                call.respond(HttpStatusCode.Conflict, "Error while declining the offer $offerId")
                 return@post
             }
 
@@ -237,10 +237,10 @@ fun Route.offerRouting(
                         text = "You declined the offer  that proposed ${proposedUser.username} with an amount of ${offer.messages.last().amount}"
                     )
                 )){
-                call.respond(HttpStatusCode.OK, "Offerta $offerId rifiutata con successo")
+                call.respond(HttpStatusCode.OK, "Offer $offerId successfully declined")
 
             }else{
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento dell'activity")
+                call.respond(HttpStatusCode.Conflict, "Error while inserting the activity")
                 return@post
             }
         }
@@ -249,7 +249,7 @@ fun Route.offerRouting(
             val username = call.request.queryParameters["userName"]
 
             if (username.isNullOrBlank()) {
-                call.respond(HttpStatusCode.BadRequest, "Parametro username mancante")
+                call.respond(HttpStatusCode.BadRequest, "Missing username parameter")
                 return@get
             }
 
@@ -261,7 +261,7 @@ fun Route.offerRouting(
             } catch (e: Exception) {
                 call.respond(
                     HttpStatusCode.InternalServerError,
-                    "Errore durante il recupero offerte $username ${e.localizedMessage}"
+                    "Error retrieving offers $username ${e.localizedMessage}"
                 )
             }
         }

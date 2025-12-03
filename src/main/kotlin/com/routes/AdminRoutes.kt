@@ -33,7 +33,7 @@ fun Route.admin(
 
             get {
                 val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
-                    call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                    call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
                     return@get
                 }
 
@@ -44,7 +44,7 @@ fun Route.admin(
                     } catch (e: Exception) {
                         call.respond(
                             HttpStatusCode.InternalServerError,
-                            ListResponse<List<Agency>>(success = false, message = "Errore DB: ${e.message}")
+                            ListResponse<List<Agency>>(success = false, message = "DB error: ${e.message}")
                         )
                         return@get
                     }
@@ -54,12 +54,12 @@ fun Route.admin(
                         ListResponse(success = true, data = filteredUsers)
                     )
 
-                }else if( request.typeRequest == "agent_user"){
+                } else if (request.typeRequest == "agent_user") {
 
                     val filteredUsers = try {
                         val agency = agencyDataSource.getAgencyByEmail(request.email)
                         if (agency == null) {
-                            call.respond(HttpStatusCode.BadRequest, "Agenzia non trovata.")
+                            call.respond(HttpStatusCode.BadRequest, "Agency not found.")
                             return@get
                         }
 
@@ -74,7 +74,7 @@ fun Route.admin(
                     } catch (e: Exception) {
                         call.respond(
                             HttpStatusCode.InternalServerError,
-                            ListResponse<List<User>>(success = false, message = "Errore DB: ${e.localizedMessage}")
+                            ListResponse<List<User>>(success = false, message = "DB error: ${e.localizedMessage}")
                         )
                         return@get
                     }
@@ -83,14 +83,15 @@ fun Route.admin(
                         HttpStatusCode.OK,
                         ListResponse(success = true, data = filteredUsers)
                     )
-                }else{
+
+                } else {
 
                     val users = try {
                         userDataSource.getAllUsers()
                     } catch (e: Exception) {
                         call.respond(
                             HttpStatusCode.InternalServerError,
-                            ListResponse<List<Agency>>(success = false, message = "Errore DB: ${e.message}")
+                            ListResponse<List<Agency>>(success = false, message = "DB error: ${e.message}")
                         )
                         return@get
                     }
@@ -106,7 +107,7 @@ fun Route.admin(
                 val email = call.request.queryParameters["email"]
 
                 if (email.isNullOrBlank()) {
-                    call.respond(HttpStatusCode.BadRequest, "Parametro 'email' mancante o vuoto")
+                    call.respond(HttpStatusCode.BadRequest, "Missing or empty parameter 'email'")
                     return@get
                 }
 
@@ -115,31 +116,31 @@ fun Route.admin(
                 if (user != null) {
                     call.respond(HttpStatusCode.OK, mapOf("id" to user.id.toString()))
                 } else {
-                    call.respond(HttpStatusCode.NotFound, "Nessun utente trovato per email=$email")
+                    call.respond(HttpStatusCode.NotFound, "No user found for email=$email")
                 }
             }
 
-            post{
+            post {
 
                 val request = runCatching { call.receiveNullable<AdminRequest>() }.getOrNull() ?: run {
-                    call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                    call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
                     return@post
                 }
 
                 val admin = userDataSource.getUserByEmail(request.adminEmail)
 
                 if (admin == null) {
-                    call.respond(HttpStatusCode.Unauthorized, "Admin non trovato.")
+                    call.respond(HttpStatusCode.Unauthorized, "Admin not found.")
                     return@post
                 }
 
-                if( admin.id.toString() != request.adminId ){
-                    call.respond(HttpStatusCode.Unauthorized, "Impossibile convalidare le credenziali.")
+                if (admin.id.toString() != request.adminId) {
+                    call.respond(HttpStatusCode.Unauthorized, "Unable to validate credentials.")
                     return@post
                 }
 
                 if (userDataSource.getUserByEmail(request.email) != null ) {
-                    call.respond(HttpStatusCode.Unauthorized, "Suppadmin gia esistente.")
+                    call.respond(HttpStatusCode.Unauthorized, "Support admin already exists.")
                     return@post
                 }
 
@@ -148,19 +149,22 @@ fun Route.admin(
 
                 val user = User(
                     email = request.email,
-                    role = if(request.email.contains("system") ) Role.SUPPORT_ADMIN else Role.AGENT_USER,
+                    role = if (request.email.contains("system")) Role.SUPPORT_ADMIN else Role.AGENT_USER,
                     password = saltedHash.hash!!,
                     salt = saltedHash.salt!!
                 )
 
                 val wasAcknowledged = userDataSource.insertUser(user)
                 if (!wasAcknowledged) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                    call.respond(HttpStatusCode.Conflict, "Error inserting user.")
                     return@post
                 }
 
-                val result = mailerSendService.sendSuppAdminEmail(request.suppAdminEmail, user.email.myToLowerCase(), password)
-
+                val result = mailerSendService.sendSuppAdminEmail(
+                    request.suppAdminEmail,
+                    user.email.myToLowerCase(),
+                    password
+                )
 
                 if (result.status == Accepted) {
 
@@ -171,14 +175,13 @@ fun Route.admin(
                             text = activityDataSource.textINSERT(user.email)
                         )
                     )
-                    
-                    call.respond(HttpStatusCode.OK, "Credenziali inviate all'email ${request.suppAdminEmail} con successo")
-                }else{
 
-                    call.respond(HttpStatusCode.Conflict, "Errore durante l'invio email")
+                    call.respond(HttpStatusCode.OK, "Credentials successfully sent to ${request.suppAdminEmail}")
+                } else {
+
+                    call.respond(HttpStatusCode.Conflict, "Error sending email.")
                     return@post
                 }
-
             }
 
         }

@@ -13,43 +13,41 @@ fun Route.imageRoutes(
 
     post("/user/profile/image") {
         val request = runCatching { call.receive<ImageRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
+            call.respond(HttpStatusCode.BadRequest, "Missing or malformed data.")
             return@post
         }
 
         val result = imageDataSource.updatePpById(
-                ownerIdentifier = request.ownerId!!,
-                base64Image = request.base64Images.first(),
-            )
-
+            ownerIdentifier = request.ownerId!!,
+            base64Image = request.base64Images.first(),
+        )
 
         if (result)
-            call.respond(HttpStatusCode.OK, "Immagine profilo aggiornata.")
+            call.respond(HttpStatusCode.OK, "Profile image updated.")
         else
-            call.respond(HttpStatusCode.InternalServerError, "Errore aggiornamento immagine.")
+            call.respond(HttpStatusCode.InternalServerError, "Error updating image.")
     }
 
     get("/user/profile/image/{userId}") {
         val userId = call.parameters["userId"]
 
         if (userId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, "userId mancante")
+            call.respond(HttpStatusCode.BadRequest, "Missing userId.")
             return@get
         }
 
         val imageBase64 = imageDataSource.getUserProfileImage(userId)
 
         if (imageBase64 == null) {
-            call.respond(HttpStatusCode.Conflict, "Nessuna immagine associata all'utente")
+            call.respond(HttpStatusCode.Conflict, "No image associated with this user.")
         } else {
             call.respondText(imageBase64, ContentType.Text.Plain)
         }
-
     }
 
     post("/house/image") {
         val request = runCatching { call.receive<ImageRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
+            call.respond(HttpStatusCode.BadRequest, "Missing or malformed data.")
             return@post
         }
 
@@ -59,26 +57,25 @@ fun Route.imageRoutes(
         )
 
         if (success)
-            call.respond(HttpStatusCode.OK, "Immagini annuncio aggiornate.")
+            call.respond(HttpStatusCode.OK, "Listing images updated.")
         else
-            call.respond(HttpStatusCode.InternalServerError, "Errore aggiornamento immagini.")
+            call.respond(HttpStatusCode.InternalServerError, "Error updating images.")
     }
 
     get("/propertylisting/image/{ownerId}") {
         val ownerId = call.parameters["ownerId"]
 
         if (ownerId.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, "ownerId mancante")
+            call.respond(HttpStatusCode.BadRequest, "Missing ownerId.")
             return@get
         }
 
         val imageBase64 = imageDataSource.getUserProfileImage(ownerId)
 
         if (imageBase64 == null) {
-            call.respond(HttpStatusCode.Conflict, "Nessuna immagine associata all'annuncio")
+            call.respond(HttpStatusCode.Conflict, "No image associated with this listing.")
         } else {
             call.respondText(imageBase64, ContentType.Text.Plain)
         }
-
     }
 }

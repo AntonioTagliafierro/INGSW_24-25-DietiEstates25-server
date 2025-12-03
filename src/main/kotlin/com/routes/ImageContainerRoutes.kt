@@ -2,7 +2,6 @@ package com.routes
 
 import io.ktor.http.*
 import io.ktor.http.content.*
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -19,7 +18,7 @@ fun Route.imageContainerRoutes(baseUrl: String) {
         if (!uploadDir.exists()) uploadDir.mkdirs()
 
         multipart.forEachPart { part ->
-            println("Ricevuta parte: ${part.name} - ${part::class.simpleName}")
+            println("Received part: ${part.name} - ${part::class.simpleName}")
 
             if (part is PartData.FileItem) {
                 // Estensione file dal nome originale o dal contentType
@@ -32,7 +31,7 @@ fun Route.imageContainerRoutes(baseUrl: String) {
                         else -> "jpg"
                     }
 
-                // Se manca il nome originale, genera uno casuale
+                // genera un nome casuale
                 val fileName = "${UUID.randomUUID()}.$ext"
                 val file = File(uploadDir, fileName)
 
@@ -41,9 +40,9 @@ fun Route.imageContainerRoutes(baseUrl: String) {
                         file.outputStream().use { it.write(input.readBytes()) }
                     }
                     uploadedUrls.add("$baseUrl/uploads/images/listings/$fileName")
-                    println("File salvato: ${file.absolutePath}")
+                    println("File saved: ${file.absolutePath}")
                 } catch (e: Exception) {
-                    println("Errore nel salvare il file: ${e.message}")
+                    println("Error: File not saved: ${e.message}")
                 }
             }
 
@@ -51,7 +50,7 @@ fun Route.imageContainerRoutes(baseUrl: String) {
         }
 
         if (uploadedUrls.isEmpty()) {
-            call.respond(HttpStatusCode.BadRequest, "Nessun file valido inviato")
+            call.respond(HttpStatusCode.BadRequest, "No valid file sent")
         } else {
             call.respond(HttpStatusCode.OK, uploadedUrls)
         }

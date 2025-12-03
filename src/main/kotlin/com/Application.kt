@@ -30,8 +30,6 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.jackson.*
 import kotlinx.serialization.json.Json
 import io.ktor.serialization.kotlinx.json.*
-import io.ktor.server.http.content.files
-import io.ktor.server.http.content.static
 import io.ktor.server.http.content.staticFiles
 import io.ktor.server.netty.*
 import io.ktor.server.routing.routing

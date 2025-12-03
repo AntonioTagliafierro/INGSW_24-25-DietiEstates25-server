@@ -50,19 +50,17 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
 
         get("getpropertieslistingbyemail") {
             val email = call.receive<String>()
-            if (email.isNullOrBlank()) {
+            if (email.isBlank()) {
                 return@get call.respond(HttpStatusCode.BadRequest, "Email is required")
             }
 
             val listings = propertyListingDataSource.getListingsByEmail(email)
 
 
-            //val response = listings.map { it.toResponse() }
 
             call.respond(HttpStatusCode.OK, ListResponse(success = true, data = listings))
 
 
-            //call.respond(HttpStatusCode.OK, response)
         }
 
         get("/{id}") {
@@ -74,7 +72,7 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
 
             val listing = propertyListingDataSource.getListingById(id)
 
-            println("PORCODIO CHE SBALLO ${listing?.property?.city ?: "AOOOO..."}")
+            println(" ${listing?.property?.city ?: "..."}")
 
             if (listing != null) {
                 call.respond(HttpStatusCode.OK, listing)
@@ -142,7 +140,7 @@ fun Route.propertyListingRoutes(propertyListingDataSource: PropertyListingDataSo
             val filters = mutableListOf<Bson>()
 
             // Filtra per type (sempre obbligatorio)
-            request.type?.let { filters += Filters.eq("type", it) }
+            request.type.let { filters += Filters.eq("type", it) }
 
             // Solo se city NON è "ALL" aggiungiamo il filtro
             if (!request.city.isNullOrBlank() && request.city != "ALL") {

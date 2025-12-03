@@ -1,14 +1,11 @@
 package com.data.models.appointment
 
 import com.data.models.propertylisting.ListingSummary
-import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.User
 import com.security.serializer.ObjectIdSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.bson.types.ObjectId
-import org.litote.kmongo.serialization.LocalDateSerializer
-import java.time.LocalDate
 
 
 @Serializable

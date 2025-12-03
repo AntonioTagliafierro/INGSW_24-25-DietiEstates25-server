@@ -2,7 +2,6 @@ package com.service.mailservice
 
 import com.data.models.appointment.Appointment
 import com.data.models.propertylisting.ListingSummary
-import com.data.models.propertylisting.PropertyListing
 import com.data.models.user.User
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -23,9 +22,9 @@ class MailerSendService(
         listing: ListingSummary,
         appointment: Appointment
     ): HttpResponse {
-        val subject = "Welcome to My App"
+        val subject = "Appointment"
         val userUsername: String = user.username
-        val agentEmail: String = "antonio.tagliafierro1998@gmail.com" // perché API gratuita manda email solo all'email dell'account
+        val agentEmail: String = "xtony98x@gmail.com" // perché API gratuita manda email solo all'email dell'account
         val agentUsername: String = agent.username
         val title: String = listing.title
         val address: String = listing.property.city + " " + listing.property.street + " " + listing.property.civicNumber
@@ -45,7 +44,7 @@ class MailerSendService(
 
         val emailRequest = EmailRequest(
             from = EmailRequest.Recipient(
-                email = "dietiestates25@test-q3enl6kv06842vwr.mlsender.net",
+                email = "dietiestates25@test-q3enl6k6ey742vwr.mlsender.net",
                 name = "DietiEstates25"
             ),
             to = listOf(
@@ -55,7 +54,7 @@ class MailerSendService(
                 )
             ),
             subject = subject,
-            templateId = "k68zxl21dke4j905",
+            templateId = "7dnvo4dk1xrl5r86",
             personalization = listOf(personalization)
         )
 
@@ -96,7 +95,7 @@ class MailerSendService(
 
         val emailRequest = EmailRequest(
             from = EmailRequest.Recipient(
-                email = "dietiestates25@test-q3enl6kv06842vwr.mlsender.net",
+                email = "dietiestates25@test-q3enl6k6ey742vwr.mlsender.net",
                 name = "DietiEstates25"
             ),
             to = listOf(
@@ -106,7 +105,7 @@ class MailerSendService(
                 )
             ),
             subject = subject,
-            templateId = "3zxk54vy7e14jy6v",
+            templateId = "3z0vklovw9vg7qrx",
             personalization = listOf(personalization)
         )
 

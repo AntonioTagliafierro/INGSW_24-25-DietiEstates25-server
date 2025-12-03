@@ -29,7 +29,7 @@ fun Route.userAuth(
 
     post("/auth/thirdPartyUser") {
         val request = runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
+            call.respond(HttpStatusCode.BadRequest, "Missing or malformed data.")
             return@post
         }
 
@@ -72,19 +72,19 @@ fun Route.userAuth(
     post("/auth/signup") {
 
         val request = runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Dati mancanti o malformati.")
+            call.respond(HttpStatusCode.BadRequest, "Missing or malformed data.")
             return@post
         }
 
         val areFieldsBlank = request.email.isBlank()
 
         if (areFieldsBlank) {
-            call.respond(HttpStatusCode.Conflict, "Email o password vuoti.")
+            call.respond(HttpStatusCode.Conflict, "Email or password is empty.")
             return@post
         }
 
         if ( userDataSource.getUserByEmail(request.email) != null ){
-            call.respond(HttpStatusCode.Conflict, "Utente gia registrato.")
+            call.respond(HttpStatusCode.Conflict, "User already registered.")
             return@post
         }
 
@@ -98,7 +98,7 @@ fun Route.userAuth(
 
         val wasAcknowledged = userDataSource.insertUser(user)
         if (!wasAcknowledged) {
-            call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+            call.respond(HttpStatusCode.Conflict, "Error during user creation.")
             return@post
         }
 
@@ -111,14 +111,14 @@ fun Route.userAuth(
 
     post("/auth/signin") {
         val request = runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
-            call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+            call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
             return@post
         }
 
         val user = userDataSource.getUserByEmail(request.email)
 
         if (user == null) {
-            call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
+            call.respond(HttpStatusCode.Unauthorized, "Login failed: invalid credentials.")
             return@post
         }
 
@@ -129,14 +129,14 @@ fun Route.userAuth(
             )
 
             if (!isValidPassword) {
-                call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
+                call.respond(HttpStatusCode.Unauthorized, "Login failed: invalid credentials.")
                 return@post
             }
 
-        }else{
+        } else {
 
             if ( user.password != request.password ){
-                call.respond(HttpStatusCode.Unauthorized, "Accesso fallito: credenziali errate.")
+                call.respond(HttpStatusCode.Unauthorized, "Login failed: invalid credentials.")
                 return@post
             }
         }
@@ -166,13 +166,13 @@ fun Route.authenticate(
             val userId = principal?.getClaim("userId", String::class)
 
             if (userId == null) {
-                call.respond(HttpStatusCode.Unauthorized, "Token non valido")
+                call.respond(HttpStatusCode.Unauthorized, "Invalid token")
                 return@get
             }
 
             val user = userDataSource.getUserById(userId)
             if (user == null) {
-                call.respond(HttpStatusCode.NotFound, "Utente non trovato")
+                call.respond(HttpStatusCode.NotFound, "User not found")
                 return@get
             }
 

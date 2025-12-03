@@ -32,7 +32,7 @@ fun Route.agencyRequests(
 
         post("/request") {
             val request = runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
                 return@post
             }
 
@@ -51,13 +51,13 @@ fun Route.agencyRequests(
                 )
 
                 if (!wasAcknowledged) {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento user")
+                    call.respond(HttpStatusCode.Conflict, "Error while inserting user.")
                     return@post
                 }
 
                 user = userDataSource.getUserByEmail(request.email)
             } else {
-                call.respond(HttpStatusCode.Unauthorized, "Questa email esiste già")
+                call.respond(HttpStatusCode.Unauthorized, "This email already exists.")
                 return@post
             }
 
@@ -70,7 +70,7 @@ fun Route.agencyRequests(
             )
 
             if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento agency")
+                call.respond(HttpStatusCode.Conflict, "Error while inserting agency.")
                 return@post
             }
 
@@ -84,7 +84,7 @@ fun Route.agencyRequests(
             wasAcknowledged = agencyDataSource.insertAgencyUser(agencyUser)
 
             if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'inserimento agencyUser")
+                call.respond(HttpStatusCode.Conflict, "Error while inserting agencyUser.")
                 return@post
             }
 
@@ -94,19 +94,19 @@ fun Route.agencyRequests(
 
         post("/request-decision") {
             val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
                 return@post
             }
 
             val user = userDataSource.getUserByEmail(request.value)
                 ?: run {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante il retrieve dell'agente")
+                    call.respond(HttpStatusCode.Conflict, "Error retrieving agent.")
                     return@post
                 }
 
             val admin = userDataSource.getUserByEmail(request.email)
                 ?: run {
-                    call.respond(HttpStatusCode.Conflict, "Errore durante il retrieve dell'agente")
+                    call.respond(HttpStatusCode.Conflict, "Error retrieving admin.")
                     return@post
                 }
 
@@ -114,13 +114,13 @@ fun Route.agencyRequests(
 
                 val roleUpdated = userDataSource.updateUserRole(user.email.myToLowerCase(), Role.AGENT_ADMIN)
                 if (!roleUpdated) {
-                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update del ruolo")
+                    call.respond(HttpStatusCode.InternalServerError, "Error while updating user role.")
                     return@post
                 }
 
                 val agencyUpdated = agencyDataSource.updateAgencyState(user.id.toString())
                 if (!agencyUpdated) {
-                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update dell'agenzia")
+                    call.respond(HttpStatusCode.InternalServerError, "Error while updating agency state.")
                     return@post
                 }
 
@@ -132,18 +132,18 @@ fun Route.agencyRequests(
                     )
                 )
 
-                call.respond(HttpStatusCode.OK, "Richiesta accettata con successo")
+                call.respond(HttpStatusCode.OK, "Request successfully approved.")
             } else {
 
                 val roleUpdated = userDataSource.deleteUser(user.email.myToLowerCase())
                 if (!roleUpdated) {
-                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'update del ruolo")
+                    call.respond(HttpStatusCode.InternalServerError, "Error while removing user.")
                     return@post
                 }
 
                 val agencyDeleted = agencyDataSource.deleteAgency(user.id.toString())
                 if (!agencyDeleted) {
-                    call.respond(HttpStatusCode.InternalServerError, "Errore durante l'eliminazione dell'agenzia")
+                    call.respond(HttpStatusCode.InternalServerError, "Error while deleting agency.")
                     return@post
                 }
 
@@ -162,7 +162,7 @@ fun Route.agencyRequests(
                     )
                 )
 
-                call.respond(HttpStatusCode.OK, "Richiesta rifiutata con successo")
+                call.respond(HttpStatusCode.OK, "Request successfully declined.")
             }
         }
 
@@ -172,7 +172,7 @@ fun Route.agencyRequests(
             } catch (e: Exception) {
                 call.respond(
                     HttpStatusCode.InternalServerError,
-                    ListResponse<List<Agency>>(success = false, message = "Errore DB: ${e.message}")
+                    ListResponse<List<Agency>>(success = false, message = "DB error: ${e.message}")
                 )
                 return@get
             }
@@ -189,7 +189,7 @@ fun Route.agencyRequests(
             if (userId.isNullOrBlank()) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    "Parametro userId mancante"
+                    "Missing parameter userId"
                 )
                 return@get
             }
@@ -200,7 +200,7 @@ fun Route.agencyRequests(
                 if (agency == null) {
                     call.respond(
                         HttpStatusCode.NotFound,
-                        "Nessuna agenzia trovata per userId=$userId"
+                        "No agency found for userId=$userId"
                     )
                 } else {
                     call.respond(
@@ -211,50 +211,50 @@ fun Route.agencyRequests(
             } catch (e: Exception) {
                 call.respond(
                     HttpStatusCode.InternalServerError,
-                    "Errore durante il recupero dell'agenzia: ${e.localizedMessage}"
+                    "Error retrieving agency: ${e.localizedMessage}"
                 )
             }
         }
 
         put("/pic") {
             try {
-                val params = call.receive<Map<String, String>>()  // legge il JSON
+                val params = call.receive<Map<String, String>>()  // reads JSON
                 val agencyId = params["agencyId"]
                 val profilePic = params["profilePic"]
 
                 if (agencyId.isNullOrBlank() || profilePic.isNullOrBlank()) {
-                    call.respond(HttpStatusCode.BadRequest, "Parametri mancanti: agencyId e profilePic obbligatori")
+                    call.respond(HttpStatusCode.BadRequest, "Missing parameters: agencyId and profilePic are required.")
                     return@put
                 }
 
                 val result = imageDataSource.updatePpById(agencyId, profilePic)
 
                 if (result) {
-                    call.respond(HttpStatusCode.OK,( "Operazione completata"))
+                    call.respond(HttpStatusCode.OK,( "Operation completed."))
                 } else {
-                    call.respond(HttpStatusCode.BadRequest, ( "Errore sconosciuto"))
+                    call.respond(HttpStatusCode.BadRequest, ( "Unknown error."))
                 }
 
             } catch (e: Exception) {
-                call.respond(HttpStatusCode.InternalServerError, "Errore server: ${e.localizedMessage}")
+                call.respond(HttpStatusCode.InternalServerError, "Server error: ${e.localizedMessage}")
             }
         }
 
         post("/agent"){
             val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Payload mancante o malformato.")
+                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
                 return@post
             }
 
             val agent = userDataSource.getUserByEmail(request.email)
             if (agent == null) {
-                call.respond(HttpStatusCode.NotFound, "Nessun utente trovato con email ${request.email}")
+                call.respond(HttpStatusCode.NotFound, "No user found with email ${request.email}")
                 return@post
             }
 
             val agency = agencyDataSource.getAgencyByEmail(request.value)
             if (agency == null) {
-                call.respond(HttpStatusCode.NotFound, "Nessuna agenzia trovata con email ${request.value}")
+                call.respond(HttpStatusCode.NotFound, "No agency found with email ${request.value}")
                 return@post
             }
 
@@ -267,11 +267,11 @@ fun Route.agencyRequests(
             )
 
             if (!wasAcknowledged) {
-                call.respond(HttpStatusCode.Conflict, "Errore durante l'iserimento")
+                call.respond(HttpStatusCode.Conflict, "Error while inserting agent.")
                 return@post
             }
 
-            call.respond(HttpStatusCode.OK, "Operazione completata con successo")
+            call.respond(HttpStatusCode.OK, "Operation successfully completed.")
         }
 
 
@@ -281,7 +281,7 @@ fun Route.agencyRequests(
         val email = call.request.queryParameters["email"]
 
         if (email.isNullOrBlank()) {
-            call.respond(HttpStatusCode.BadRequest, "Parametro 'email' mancante")
+            call.respond(HttpStatusCode.BadRequest, "Missing parameter 'email'.")
             return@get
         }
 
@@ -289,12 +289,12 @@ fun Route.agencyRequests(
             val agentName = userDataSource.getUserByEmail(email)
 
             if (agentName == null) {
-                call.respond(HttpStatusCode.NotFound, "Nessun agente trovato con email $email")
+                call.respond(HttpStatusCode.NotFound, "No agent found with email $email")
             } else {
                 call.respond(HttpStatusCode.OK, agentName.username)
             }
         } catch (e: Exception) {
-            call.respond(HttpStatusCode.InternalServerError, "Errore: ${e.localizedMessage}")
+            call.respond(HttpStatusCode.InternalServerError, "Error: ${e.localizedMessage}")
         }
     }
 }

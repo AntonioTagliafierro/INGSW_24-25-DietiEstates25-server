@@ -121,7 +121,7 @@ fun Route.profileRoutes(
 
             if (activities.isEmpty()) {
                 call.respond(
-                    HttpStatusCode.OK, // oppure NotFound se vuoi differenziare
+                    HttpStatusCode.OK,
                     ListResponse<List<Activity>>(success = false, data = null, message = "No activities found for userId=$userId")
                 )
             } else {
