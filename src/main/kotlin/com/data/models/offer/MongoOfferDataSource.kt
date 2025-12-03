@@ -32,6 +32,33 @@ class MongoOfferDataSource (
         }
     }
 
+    override suspend fun getOfferByUser(propertyId: String, userId: String, isAgent : Boolean): Offer? {
+        return try {
+            val filter = Filters.and(
+                Filters.eq("listing.id", propertyId),
+                if(isAgent) Filters.eq("buyerUser.id", userId)
+                else Filters.eq("agentUser.id", userId)
+            )
+
+            val offer = offers.find(filter).firstOrNull()
+
+            if (offer == null) {
+                println("Nessuna offerta trovata per propertyId=$propertyId e userId=$userId")
+            } else {
+                println("Offerta trovata: $offer")
+            }
+
+            offer
+
+        } catch (e: Exception) {
+            println("Errore durante la ricerca dell'offerta: ${e.localizedMessage}")
+            null
+        }
+    }
+
+
+
+
     override suspend fun getOffer(offerId : String): Offer? {
         return try {
             val filter = Filters.eq("id", offerId)
@@ -167,7 +194,6 @@ class MongoOfferDataSource (
             emptyList()
         }
     }
-
 
 
 }
