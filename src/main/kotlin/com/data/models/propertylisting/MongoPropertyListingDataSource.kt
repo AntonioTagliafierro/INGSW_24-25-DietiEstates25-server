@@ -45,7 +45,7 @@ class MongoPropertyListingDataSource(
         }
     }
 
-    // 🔹 Metodo ora usa direttamente la collection (immagini non più allegate automaticamente)
+
     override suspend fun getAllListings(): List<PropertyListing> = withContext(Dispatchers.IO) {
         try {
             val listings = collection.find().toList()
@@ -109,8 +109,8 @@ class MongoPropertyListingDataSource(
                 println("Query con type=$type, city=$city")
                 val listings = collection.find(
                     Filters.and(
-                        Filters.eq("type", type),
-                        Filters.eq("property.city", city)
+                        Filters.regex("type", "^${Regex.escape(type)}$", "i"),
+                        Filters.regex("property.city", city, "i")
                     )
                 ).toList()
 
@@ -132,18 +132,5 @@ class MongoPropertyListingDataSource(
         }
     }
 
-    /*
-    // 🔹 Funzione lasciata commentata per futuro riuso
-    override suspend fun attachImagesToListings(listings: List<PropertyListing>): List<PropertyListing> {
-        val allIds = listings.map { it.id.toString() }
-        val imagesMap = imageDataSource.getHouseImagesByIds(allIds)
 
-        println("Trovati ${listings.size} documenti in MongoDB")
-
-        return listings.map { listing ->
-            val images = imagesMap[listing.id.toString()] ?: emptyList()
-            listing.copy(property = listing.property.copy(images = images))
-        }
-    }
-    */
 }
