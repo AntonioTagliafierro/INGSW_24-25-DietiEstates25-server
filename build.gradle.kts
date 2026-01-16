@@ -10,7 +10,15 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.0"
     id("org.sonarqube") version "6.3.1.5724"
 }
+kotlin {
+    jvmToolchain(17)
+}
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
 sonarqube {
     properties {
         property("sonar.projectKey", "DietiEstates25_backend")
@@ -19,7 +27,11 @@ sonarqube {
         //        property "sonar.tests", "src/test"   per analizzare le JUnit del server
     }
 }
-
+ktor {
+    fatJar {
+        archiveFileName.set("app.jar")
+    }
+}
 
 group = "com"
 version = "0.0.1"

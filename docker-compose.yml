@@ -1,0 +1,24 @@
+services:
+  backend:
+    image: dietiestates-backend
+    container_name: dietiestates-backend
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:8.0.4
+    container_name: dietiestates-mongo
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  uploads:

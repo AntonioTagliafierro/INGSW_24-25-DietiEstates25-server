@@ -146,7 +146,7 @@ fun Route.admin(
 
                 val password = admin.generateRandomPassword()
                 val saltedHash = hashingService.generateSaltedHash(password)
-
+                println(password)
                 val user = User(
                     email = request.email,
                     role = if (request.email.contains("system")) Role.SUPPORT_ADMIN else Role.AGENT_USER,
