@@ -1,6 +1,6 @@
 services:
   backend:
-    image: dietiestates-backend
+    build: .
     container_name: dietiestates-backend
     ports:
       - "8080:8080"
