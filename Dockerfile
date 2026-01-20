@@ -3,9 +3,10 @@ FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 COPY app.jar app.jar
+COPY entrypoint.sh entrypoint.sh
 
-RUN mkdir -p /app/uploads/listings
+RUN chmod +x entrypoint.sh
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["./entrypoint.sh"]

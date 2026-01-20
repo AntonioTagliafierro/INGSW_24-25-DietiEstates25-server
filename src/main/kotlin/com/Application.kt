@@ -110,7 +110,7 @@ fun Application.module() {
     val gitHubOAuthService = GitHubOAuthService(
         clientId = System.getenv("GITHUB_CLIENT_ID")?: "",
         clientSecret = System.getenv("GITHUB_CLIENT_SECRET")?: "",
-        redirectUri = "http://10.0.2.2:8080/callback/github",
+        redirectUri = "http://84.8.252.211:8080/callback/github",
         httpClient = sharedHttpClient
     )
 
