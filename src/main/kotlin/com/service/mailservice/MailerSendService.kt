@@ -24,7 +24,7 @@ class MailerSendService(
     ): HttpResponse {
         val subject = "Appointment"
         val userUsername: String = user.username
-        val agentEmail: String = "xtony98x@gmail.com" // perché API gratuita manda email solo all'email dell'account
+        val agentEmail: String = "antoniotagliafierro05@gmail.com" // perché API gratuita manda email solo all'email dell'account
         val agentUsername: String = agent.username
         val title: String = listing.title
         val address: String = listing.property.city + " " + listing.property.street + " " + listing.property.civicNumber
@@ -54,7 +54,7 @@ class MailerSendService(
                 )
             ),
             subject = subject,
-            templateId = "7dnvo4dk1xrl5r86",
+            templateId = "z86org8dw5zlew13",
             personalization = listOf(personalization)
         )
 
@@ -105,7 +105,7 @@ class MailerSendService(
                 )
             ),
             subject = subject,
-            templateId = "3z0vklovw9vg7qrx",
+            templateId = "pxkjn41d07q4z781",
             personalization = listOf(personalization)
         )
 
