@@ -7,7 +7,6 @@ import com.data.models.appointment.Appointment
 import com.data.models.appointment.AppointmentDataSource
 import com.data.models.appointment.AppointmentMessage
 import com.data.models.appointment.AppointmentStatus
-import com.data.models.propertylisting.PropertyListingDataSource
 import com.data.models.user.UserDataSource
 import com.data.requests.AppointmentMessageRequest
 import com.data.requests.AppointmentRequest
@@ -25,7 +24,6 @@ fun Route.appointmentRouting(
     appointmentDataSource: AppointmentDataSource,
     userDataSource: UserDataSource,
     mailerSendService: MailerSendService,
-    listingDataSource: PropertyListingDataSource,
     activityDataSource: ActivityDataSource
 ) {
     route("/appointments") {

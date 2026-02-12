@@ -16,6 +16,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+private const val ERROR_INSERTING_ACTIVITY = "Error while inserting the activity"
+
 fun Route.offerRouting(
     offerDataSource: OfferDataSource,
     userDataSource: UserDataSource,
@@ -23,7 +25,9 @@ fun Route.offerRouting(
     activityDataSource: ActivityDataSource
 ) {
 
+
     route("/offers") {
+
 
         get("/single") {
             val offerId = call.request.queryParameters["offerId"]
@@ -159,7 +163,7 @@ fun Route.offerRouting(
 
                 call.respond(HttpStatusCode.Created, updatedOffer)
             } else {
-                call.respond(HttpStatusCode.Conflict, "Error while inserting the activity")
+                call.respond(HttpStatusCode.Conflict, ERROR_INSERTING_ACTIVITY)
                 return@post
             }
 
@@ -227,7 +231,7 @@ fun Route.offerRouting(
                 )){
                 call.respond(HttpStatusCode.OK, "Offer $offerId successfully accepted")
             }else{
-                call.respond(HttpStatusCode.Conflict, "Error while inserting the activity")
+                call.respond(HttpStatusCode.Conflict, ERROR_INSERTING_ACTIVITY)
                 return@post
             }
         }
@@ -268,7 +272,7 @@ fun Route.offerRouting(
                 call.respond(HttpStatusCode.OK, "Offer $offerId successfully declined")
 
             }else{
-                call.respond(HttpStatusCode.Conflict, "Error while inserting the activity")
+                call.respond(HttpStatusCode.Conflict, ERROR_INSERTING_ACTIVITY)
                 return@post
             }
         }

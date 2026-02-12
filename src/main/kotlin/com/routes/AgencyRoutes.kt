@@ -20,6 +20,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+private const val INVALID_PAYLOAD = "Missing or malformed payload."
 
 fun Route.agencyRequests(
     hashingService: HashingService,
@@ -32,7 +33,7 @@ fun Route.agencyRequests(
 
         post("/request") {
             val request = runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
+                call.respond(HttpStatusCode.BadRequest, INVALID_PAYLOAD)
                 return@post
             }
 
@@ -94,7 +95,7 @@ fun Route.agencyRequests(
 
         post("/request-decision") {
             val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
+                call.respond(HttpStatusCode.BadRequest, INVALID_PAYLOAD)
                 return@post
             }
 
@@ -242,7 +243,7 @@ fun Route.agencyRequests(
 
         post("/agent"){
             val request = runCatching { call.receiveNullable<UserInfoRequest>() }.getOrNull() ?: run {
-                call.respond(HttpStatusCode.BadRequest, "Missing or malformed payload.")
+                call.respond(HttpStatusCode.BadRequest, INVALID_PAYLOAD)
                 return@post
             }
 

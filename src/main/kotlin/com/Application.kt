@@ -157,12 +157,7 @@ fun Application.module() {
     configureMonitoring()
 }
 
-//fun getDatabase(): MongoDatabase {
-//    val settings = MongoClientSettings.builder()
-//        .applyConnectionString(ConnectionString("mongodb://localhost:27017")).build()
-//    val client = MongoClient.create(settings)
-//    return client.getDatabase("immobiliDB")
-//}
+
 fun getDatabase(): MongoDatabase {
 
     val mongoUri = System.getenv("MONGO_URI") ?: "mongodb://localhost:27017"

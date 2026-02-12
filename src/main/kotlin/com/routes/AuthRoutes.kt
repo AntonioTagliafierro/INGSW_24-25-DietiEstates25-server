@@ -19,6 +19,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.*
 
+private const val INVALID_CREDENTIALS_MESSAGE = "Login failed: invalid credentials."
 
 fun Route.userAuth(
     hashingService: HashingService,
@@ -26,6 +27,8 @@ fun Route.userAuth(
     tokenService: TokenService,
     tokenConfig: TokenConfig
 ){
+
+
 
     post("/auth/thirdPartyUser") {
         val request = runCatching { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
@@ -78,6 +81,7 @@ fun Route.userAuth(
 
         val areFieldsBlank = request.email.isBlank()
 
+
         if (areFieldsBlank) {
             call.respond(HttpStatusCode.Conflict, "Email or password is empty.")
             return@post
@@ -117,8 +121,10 @@ fun Route.userAuth(
 
         val user = userDataSource.getUserByEmail(request.email)
 
+
+
         if (user == null) {
-            call.respond(HttpStatusCode.Unauthorized, "Login failed: invalid credentials.")
+            call.respond(HttpStatusCode.Unauthorized, INVALID_CREDENTIALS_MESSAGE)
             return@post
         }
 
@@ -129,14 +135,14 @@ fun Route.userAuth(
             )
 
             if (!isValidPassword) {
-                call.respond(HttpStatusCode.Unauthorized, "Login failed: invalid credentials.")
+                call.respond(HttpStatusCode.Unauthorized, INVALID_CREDENTIALS_MESSAGE)
                 return@post
             }
 
         } else {
 
             if ( user.password != request.password ){
-                call.respond(HttpStatusCode.Unauthorized, "Login failed: invalid credentials.")
+                call.respond(HttpStatusCode.Unauthorized, INVALID_CREDENTIALS_MESSAGE)
                 return@post
             }
         }
@@ -253,7 +259,6 @@ fun Route.state(){
             // Scambia il codice per ottenere un access token
             println("[GitHubAuth] Exchanging code for access token: $code")
             val accessToken = gitHubOAuthService.getAccessToken(code)
-                ?: throw IllegalStateException("Failed to retrieve access token")
 
             // Usa l'access token per ottenere i dati dell'utente
             println("[GitHubAuth] Fetching user info with access token: $accessToken")
